@@ -6,5 +6,8 @@ return [
     ],
     'color' => [
         'enabled' => false,
-    ]
+    ],
+    'rgb-matrix' => [
+        'enabled' => false,
+    ],
 ];

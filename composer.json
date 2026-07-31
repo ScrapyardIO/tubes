@@ -23,6 +23,7 @@
     "replace": {
         "tubes/monochrome": "self.version",
         "tubes/color": "self.version",
+        "tubes/matrix": "self.version",
         "tubes/epaper": "self.version"
     },
     "require-dev": {

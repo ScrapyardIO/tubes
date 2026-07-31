@@ -6,12 +6,14 @@ use Fabricate\Core\Machine as ScrapyardIOMachine;
 use Fabricate\NutsAndBolts\AggregateServiceProvider;
 use Fabricate\Contracts\Chassis\BindingResolutionException;
 use ScrapyardIO\Tubes\Color\ColorPanelServiceProvider;
+use ScrapyardIO\Tubes\Matrix\RGBMatrixServiceProvider;
 use ScrapyardIO\Tubes\Monochrome\MonochromePanelServiceProvider;
 
 class TubesServiceProvider extends AggregateServiceProvider
 {
     protected array $providers = [
         ColorPanelServiceProvider::class,
+        RGBMatrixServiceProvider::class,
         MonochromePanelServiceProvider::class,
     ];
 
