@@ -16,11 +16,13 @@ final class MetalCanvasClickBoost
     }
 
     /**
-     * Barely-significant per-frame Δv while boost is active (px/frame² scale).
+     * Acceleration while boost is active (px/s²).
+     *
+     * Tuned to match the old ~0.06 px/frame² feel at 60fps.
      */
-    public static function accelPerFrame(): float
+    public static function accelPerSecond(): float
     {
-        return 0.06;
+        return 3.6;
     }
 
     /**
@@ -57,26 +59,26 @@ final class MetalCanvasClickBoost
     }
 
     /**
-     * Acceleration to add this frame along the current velocity (or last facing).
+     * Acceleration along the current velocity (or last facing) in px/s².
      *
      * @return array{0: float, 1: float} [ax, ay]
      */
-    public static function frameAcceleration(float $vx, float $vy, float $facingX = 1.0, float $facingY = 0.0): array
+    public static function acceleration(float $vx, float $vy, float $facingX = 1.0, float $facingY = 0.0): array
     {
         $speed = hypot($vx, $vy);
-        if ($speed > 0.05) {
+        if ($speed > 3.0) {
             $ux = $vx / $speed;
             $uy = $vy / $speed;
         } else {
             $face = hypot($facingX, $facingY);
             if ($face <= 0.0) {
-                return [self::accelPerFrame(), 0.0];
+                return [self::accelPerSecond(), 0.0];
             }
             $ux = $facingX / $face;
             $uy = $facingY / $face;
         }
 
-        $a = self::accelPerFrame();
+        $a = self::accelPerSecond();
 
         return [$ux * $a, $uy * $a];
     }

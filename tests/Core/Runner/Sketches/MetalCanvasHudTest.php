@@ -4,7 +4,7 @@ use ScrapyardIO\Tubes\Core\Runner\Sketches\Support\MetalCanvasHud;
 
 test('MetalCanvasHud maps speed to warmer accents', function () {
     $slow = MetalCanvasHud::accentForSpeed(0.0);
-    $fast = MetalCanvasHud::accentForSpeed(12.0);
+    $fast = MetalCanvasHud::accentForSpeed(720.0);
 
     expect($slow)->toBe(0x4080F0FF)
         ->and($fast)->toBe(0xF0A030FF)

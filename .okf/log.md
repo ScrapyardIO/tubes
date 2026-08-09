@@ -2,6 +2,8 @@
 
 ## 2026-08-09
 
+* **Update (draft)**: [CanvasWindowDemo sketch](core/metal-canvas-sketch.md) — `BallPhysicsNode` delta-time integration (px/s, px/s²); click boost + HUD speed scale retuned for 60fps parity.
+* **Docs**: Root [`README.md`](../README.md) — short package landing (require + smoke-test) pointing at ScrapyardIO ecosystem tubes `0.7.x` docs.
 * **Update (draft)**: [TubesServiceProvider](core/tubes-service-provider.md) — `AboutCommand::add('Drivers', …)` contributes Windows / Framebuffers / Fonts from `tubes.defaults.*`.
 * **Update (draft)**: [CanvasWindowDemo sketch](core/metal-canvas-sketch.md) — opens via `Window::profile('canvas-window-demo')` / `OpenWindowNode` profile key; CLI overrides optional. tubes-dev `config/tubes.php` metal profiles at **1024×768**, default window driver `metal`.
 * **Creation (draft)**: [Tubes config](core/tubes-config.md) — hydrated `config/tubes.php` with MagicAlias `defaults` + `canvas_profiles.windows|panels`; `Window::profile()`; `driver()` null defaults; Workshop publish tag `tubes-config`. Amended [Window factory](core/window-factory.md), [Framebuffer factory](core/framebuffer-factory.md), [Fonts](core/fonts.md), [TubesServiceProvider](core/tubes-service-provider.md), AGENTS.

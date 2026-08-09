@@ -169,9 +169,10 @@ class CanvasWindowDemo extends Sketch
             'ball' => [
                 'x' => $width / 2,
                 'y' => $height / 2,
-                // Not proportional to 4:3 — avoids immediate corner-to-corner orbit.
-                'vx' => 7.1,
-                'vy' => 2.4,
+                // px/s — not proportional to 4:3 (avoids immediate corner-to-corner orbit).
+                // ~7.1 / 2.4 px/frame at 60fps.
+                'vx' => 426.0,
+                'vy' => 144.0,
                 'ax' => 0.0,
                 'ay' => 0.0,
                 'r' => $radius,

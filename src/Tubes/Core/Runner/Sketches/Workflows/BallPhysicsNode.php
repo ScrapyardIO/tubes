@@ -13,11 +13,14 @@ use ScrapyardIO\Tubes\Windows\WindowHandler;
 /**
  * Cooperative ball physics step (AsyncNode with Concurrency driver `fiber`).
  *
- * Reads/writes shared['ball'] = [x, y, vx, vy, ax, ay, r]. Bounds from the open window.
+ * Reads/writes shared['ball'] = [x, y, vx, vy, ax, ay, r]. Units: position px,
+ * velocity px/s, acceleration px/s². Integrates with measured delta time
+ * (shared['dt'], seconds). Bounds from the open window.
+ *
  * On wall hit, multiplies that axis speed by shared['restitution'] (energy loss).
  * Corner hits resolve the deeper axis only so the ball does not lock into a
  * diagonal corner-to-corner orbit. Stamps shared['frame_t0'] for {@see FramePaceNode}.
- * ax/ay are per-frame Δv for the sketch HUD.
+ * ax/ay are Δv/dt for the sketch HUD.
  *
  * When shared['window'] is an {@see OSWindow} with a companion {@see InputHandler},
  * left-click hits on the ball start a {@see MetalCanvasClickBoost} window (3s).
@@ -27,6 +30,8 @@ class BallPhysicsNode extends AsyncNode
     public function prepAsync(mixed &$shared): mixed
     {
         $shared['frame_t0'] = hrtime(true);
+        $dt = $this->resolveDeltaSeconds($shared);
+        $shared['dt'] = $dt;
 
         $window = $shared['window'] ?? null;
         $width = $window instanceof OSWindow
@@ -41,8 +46,8 @@ class BallPhysicsNode extends AsyncNode
             ? (float) $shared['restitution']
             : 0.85;
 
-        $vx = (float) ($ball['vx'] ?? 7.1);
-        $vy = (float) ($ball['vy'] ?? 2.4);
+        $vx = (float) ($ball['vx'] ?? 426.0);
+        $vy = (float) ($ball['vy'] ?? 144.0);
         $now = microtime(true);
 
         $this->applyMouseClickBoost($shared, $ball, $now);
@@ -55,10 +60,10 @@ class BallPhysicsNode extends AsyncNode
         $facingY = is_float($shared['boost_facing_y'] ?? null) ? (float) $shared['boost_facing_y'] : $vy;
 
         [$boostAx, $boostAy] = $boostActive
-            ? MetalCanvasClickBoost::frameAcceleration($vx, $vy, $facingX, $facingY)
+            ? MetalCanvasClickBoost::acceleration($vx, $vy, $facingX, $facingY)
             : [0.0, 0.0];
 
-        if ($boostActive && hypot($vx, $vy) > 0.05) {
+        if ($boostActive && hypot($vx, $vy) > 3.0) {
             $shared['boost_facing_x'] = $vx;
             $shared['boost_facing_y'] = $vy;
         }
@@ -68,6 +73,7 @@ class BallPhysicsNode extends AsyncNode
         return [
             'width' => $width,
             'height' => $height,
+            'dt' => $dt,
             'restitution' => max(0.0, min(1.0, $restitution)),
             'ball' => [
                 'x' => (float) ($ball['x'] ?? $width / 2),
@@ -89,16 +95,17 @@ class BallPhysicsNode extends AsyncNode
     {
         $width = (int) $prepRes['width'];
         $height = (int) $prepRes['height'];
+        $dt = max(1.0 / 240.0, (float) ($prepRes['dt'] ?? (1.0 / 60.0)));
         $restitution = (float) $prepRes['restitution'];
         $ball = $prepRes['ball'];
         $prevVx = (float) ($prepRes['prev_vx'] ?? $ball['vx']);
         $prevVy = (float) ($prepRes['prev_vy'] ?? $ball['vy']);
 
         $r = max(1, (int) $ball['r']);
-        $vx = (float) $ball['vx'] + (float) ($prepRes['boost_ax'] ?? 0.0);
-        $vy = (float) $ball['vy'] + (float) ($prepRes['boost_ay'] ?? 0.0);
-        $x = (float) $ball['x'] + $vx;
-        $y = (float) $ball['y'] + $vy;
+        $vx = (float) $ball['vx'] + ((float) ($prepRes['boost_ax'] ?? 0.0) * $dt);
+        $vy = (float) $ball['vy'] + ((float) ($prepRes['boost_ay'] ?? 0.0) * $dt);
+        $x = (float) $ball['x'] + ($vx * $dt);
+        $y = (float) $ball['y'] + ($vy * $dt);
 
         $minX = (float) $r;
         $maxX = (float) max($r, $width - $r - 1);
@@ -136,10 +143,10 @@ class BallPhysicsNode extends AsyncNode
         $x = max($minX, min($maxX, $x));
         $y = max($minY, min($maxY, $y));
 
-        if (abs($vx) < 0.05) {
+        if (abs($vx) < 3.0) {
             $vx = 0.0;
         }
-        if (abs($vy) < 0.05) {
+        if (abs($vy) < 3.0) {
             $vy = 0.0;
         }
 
@@ -148,9 +155,9 @@ class BallPhysicsNode extends AsyncNode
             'y' => $y,
             'vx' => $vx,
             'vy' => $vy,
-            // Per-frame Δv (bounce / clamp / click boost shows up as acceleration for the HUD).
-            'ax' => $vx - $prevVx,
-            'ay' => $vy - $prevVy,
+            // Δv/dt (bounce / clamp / click boost) for the HUD — px/s².
+            'ax' => ($vx - $prevVx) / $dt,
+            'ay' => ($vy - $prevVy) / $dt,
             'r' => $r,
         ];
     }
@@ -160,6 +167,37 @@ class BallPhysicsNode extends AsyncNode
         $shared['ball'] = is_array($execRes) ? $execRes : $prepRes['ball'];
 
         return 'default';
+    }
+
+    /**
+     * Seconds since last physics tick. First frame (or missing clock) uses 1/fps.
+     * Optional shared['dt_override'] for tests (does not sticky-overwrite measured dt).
+     * Resolved value is written to shared['dt']. Clamped to avoid spiral-of-death.
+     *
+     * @param  array<string, mixed>  $shared
+     */
+    protected function resolveDeltaSeconds(array &$shared): float
+    {
+        $fps = is_int($shared['fps'] ?? null) ? max(1, $shared['fps']) : 60;
+        $fallback = 1.0 / $fps;
+
+        if (isset($shared['dt_override']) && is_numeric($shared['dt_override']) && (float) $shared['dt_override'] > 0.0) {
+            $dt = (float) $shared['dt_override'];
+        } else {
+            $nowNs = is_int($shared['frame_t0'] ?? null)
+                ? $shared['frame_t0']
+                : hrtime(true);
+            $last = $shared['physics_last_t'] ?? null;
+
+            $dt = is_int($last) && $last > 0
+                ? ($nowNs - $last) / 1_000_000_000.0
+                : $fallback;
+
+            $shared['physics_last_t'] = $nowNs;
+        }
+
+        // ~4× target fps floor … 50ms ceiling (hitches don't teleport the ball).
+        return max(1.0 / 240.0, min(0.05, $dt));
     }
 
     /**

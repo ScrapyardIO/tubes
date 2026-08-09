@@ -22,6 +22,8 @@ sources:
 
 Composer package `scrapyard-io/tubes` at **0.7.0** — described as “The ScrapyardIO Display Panel Framework.”[^composer] It is an **opt-in companion** to `scrapyard-io/framework` 0.7 for display surfaces (see [ownership vs framework](ownership-vs-framework.md)).
 
+Root [`README.md`](../README.md) is a short Packagist/GitHub landing page (Illuminate-style) that points to the [ecosystem docs](https://scrapyard-io.projectsaturnstudios.com/ecosystem/scrapyard-io/tubes/0.7.x/overview) — not a second docs tree.
+
 | Field | Value |
 |-------|-------|
 | Name | `scrapyard-io/tubes` |

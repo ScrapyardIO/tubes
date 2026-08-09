@@ -8,9 +8,11 @@ namespace ScrapyardIO\Tubes\Core\Runner\Sketches\Support;
 final class MetalCanvasHud
 {
     /**
-     * Map speed (px/frame) to an RGBA accent — cool blue → hot amber.
+     * Map speed (px/s) to an RGBA accent — cool blue → hot amber.
+     *
+     * Default max (~720) matches the old 12 px/frame feel at 60fps.
      */
-    public static function accentForSpeed(float $speed, float $maxSpeed = 12.0): int
+    public static function accentForSpeed(float $speed, float $maxSpeed = 720.0): int
     {
         $t = $maxSpeed > 0.0 ? max(0.0, min(1.0, $speed / $maxSpeed)) : 0.0;
 

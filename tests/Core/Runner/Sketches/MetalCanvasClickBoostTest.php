@@ -26,10 +26,10 @@ it('keeps boost active for three seconds', function () {
         ->and(MetalCanvasClickBoost::remainingSeconds($until, $now + 1.5))->toBe(1.5);
 });
 
-it('applies a small frame acceleration along velocity', function () {
-    [$ax, $ay] = MetalCanvasClickBoost::frameAcceleration(4.0, 0.0);
+it('applies a small acceleration along velocity', function () {
+    [$ax, $ay] = MetalCanvasClickBoost::acceleration(240.0, 0.0);
 
-    expect($ax)->toBe(MetalCanvasClickBoost::accelPerFrame())
+    expect($ax)->toBe(MetalCanvasClickBoost::accelPerSecond())
         ->and($ay)->toBe(0.0);
 });
 
@@ -58,18 +58,20 @@ it('starts a click boost when left-click hits the ball via EngineInput', functio
         'width' => 200,
         'height' => 120,
         'restitution' => 1.0,
+        'fps' => 60,
+        'dt_override' => 1.0 / 60.0,
         'engine_input' => new EngineInput($handler),
         'mouse_left_was_pressed' => false,
         'ball' => [
             'x' => 100.0,
             'y' => 60.0,
-            'vx' => 4.0,
+            'vx' => 240.0,
             'vy' => 0.0,
             'r' => 10,
         ],
     ];
 
-    $speedBefore = 4.0;
+    $speedBefore = 240.0;
     $prep = $node->prepAsync($shared);
     $exec = $node->execAsync($prep);
     $node->postAsync($shared, $prep, $exec);
@@ -77,7 +79,8 @@ it('starts a click boost when left-click hits the ball via EngineInput', functio
     expect($shared['click_boost_until'] ?? null)->toBeFloat()
         ->and($shared['click_boost_until'])->toBeGreaterThan(microtime(true))
         ->and($shared['ball']['vx'])->toBeGreaterThan($speedBefore)
-        ->and($shared['click_boost_remaining'])->toBeGreaterThan(0.0);
+        ->and($shared['click_boost_remaining'])->toBeGreaterThan(0.0)
+        ->and($shared['dt'])->toBe(1.0 / 60.0);
 });
 
 it('ignores left-click misses outside the ball', function () {
@@ -105,12 +108,14 @@ it('ignores left-click misses outside the ball', function () {
         'width' => 200,
         'height' => 120,
         'restitution' => 1.0,
+        'fps' => 60,
+        'dt_override' => 1.0 / 60.0,
         'engine_input' => new EngineInput($handler),
         'mouse_left_was_pressed' => false,
         'ball' => [
             'x' => 100.0,
             'y' => 60.0,
-            'vx' => 4.0,
+            'vx' => 240.0,
             'vy' => 0.0,
             'r' => 10,
         ],
@@ -121,5 +126,5 @@ it('ignores left-click misses outside the ball', function () {
     $node->postAsync($shared, $prep, $exec);
 
     expect($shared['click_boost_until'] ?? null)->toBeNull()
-        ->and($shared['ball']['vx'])->toBe(4.0);
+        ->and($shared['ball']['vx'])->toBe(240.0);
 });

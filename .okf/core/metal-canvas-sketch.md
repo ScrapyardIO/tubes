@@ -33,6 +33,8 @@ Window::profile('canvas-window-demo'); // tubes.canvas_profiles.windows.canvas-w
 
 CLI `--profile`, optional driver arg, and `--title`/`-W`/`-H` override the profile. Package default size is 800×600; tubes-dev app config uses **1024×768** metal.
 
+`BallPhysicsNode` integrates with measured **delta time** (`shared['dt']`, seconds): velocity is px/s, boost accel is px/s². First frame uses `1/fps`; hitch dt is clamped (≤50ms). `FramePaceNode` still sleeps to the target fps.
+
 # Layout
 
 | Path | Role |
