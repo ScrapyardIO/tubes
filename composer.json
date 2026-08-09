@@ -1,13 +1,13 @@
 {
     "name": "scrapyard-io/tubes",
     "description": "The ScrapyardIO Display Panel Framework.",
-    "keywords": ["framework", "scrapyard-io"],
+    "keywords": ["framework", "scrapyard-io", "display", "framebuffer"],
     "license": "MIT",
-    "version": "0.6.0",
-    "homepage": "https://scrapyard-io.projectsaturnstudios.com",
+    "version": "0.7.0",
+    "homepage": "https://scrapyard-io.projectsaturnstudios.com/ecosystem/scrapyard-io/tubes/0.7.x",
     "support": {
-        "issues": "https://github.com/scrapyard-io/gpio-framework/issues",
-        "source": "https://github.com/scrapyard-io/gpio-framework"
+        "issues": "https://github.com/scrapyard-io/tubes/issues",
+        "source": "https://github.com/scrapyard-io/tubes"
     },
     "authors": [
         {
@@ -17,10 +17,15 @@
     ],
     "require": {
         "php": "^8.4|^8.5|^8.6",
-        "fabricate/displays": "^0.6.0",
-        "fabricate/circuits": "^0.6.0"
+        "fabricate/magic-aliases": "^0.7.0",
+        "fabricate/nuts-and-bolts": "^0.7.0",
+        "scrapyard-io/framework": "^0.7.0"
     },
     "replace": {
+        "tubes/contracts": "self.version",
+        "tubes/framebuffers": "self.version",
+        "tubes/rendering": "self.version",
+        "tubes/fonts": "self.version",
         "tubes/monochrome": "self.version",
         "tubes/color": "self.version",
         "tubes/matrix": "self.version",
@@ -30,24 +35,28 @@
         "pestphp/pest": "^4"
     },
     "autoload": {
-        "files": [],
         "psr-4": {
-            "ScrapyardIO\\Tubes\\": "src"
+            "ScrapyardIO\\Tubes\\": "src/Tubes"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "DeptOfScrapyardRobotics\\Tests\\": "tests/"
+            "ScrapyardIO\\Tubes\\Tests\\": "tests/"
         }
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "0.6-dev"
+            "dev-master": "0.7.x-dev"
         },
         "scrapyard-io": {
             "providers": [
                 "ScrapyardIO\\Tubes\\Core\\Providers\\TubesServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "Framebuffer": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Framebuffer",
+                "Window": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Window",
+                "Font": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Font"
+            }
         }
     },
     "config": {
