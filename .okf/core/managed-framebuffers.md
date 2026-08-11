@@ -27,6 +27,10 @@ sources:
 
 Managed = software-owned `PixelStore` + flush policy. There is **no** `FormatSpecFramebuffer` class — host FormatSpec lives on the store; `ManagedFramebuffer` holds emit helpers (`bytesForSpec`, region dump, `formatSpec()` alias).
 
+**Flush passthrough:** when the flush target FormatSpec matches the host, emit dump / dirty slices as-is (no `PixelColorPack`). Convert only on mismatch.
+
+**DirtyRegionsBuffer:** `markDirty` only appends; coalesce runs once in `flush` (avoids O(n²) merges while filling circles with VLines).
+
 # Concretes
 
 | Class | Host constraint | Flush |

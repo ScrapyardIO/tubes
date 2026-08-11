@@ -7,6 +7,8 @@ use ScrapyardIO\Tubes\Core\Enums\CanvasProfileKind;
 
 /**
  * Resolve canvas profile arrays from config('tubes.canvas_profiles.*').
+ *
+ * {@see tubes.defaults.canvas} may name any profile under windows or panels.
  */
 final class CanvasProfiles
 {
@@ -24,6 +26,75 @@ final class CanvasProfiles
     public static function panel(string $name): array
     {
         return self::resolve($name, CanvasProfileKind::PANELS);
+    }
+
+    /**
+     * Locate a slug under windows or panels (used by tubes.defaults.canvas).
+     *
+     * Ambiguous names that exist in both segments must use a dotted path
+     * (`windows.demo` / `panels.st7796-front`).
+     *
+     * @return array{0: CanvasProfileKind, 1: array<string, mixed>}
+     */
+    public static function locate(string $name): array
+    {
+        $trimmed = trim($name);
+
+        if ($trimmed === '') {
+            throw new InvalidArgumentException('Canvas profile name must be non-empty.');
+        }
+
+        if (str_starts_with($trimmed, 'tubes.canvas_profiles.windows.')
+            || str_starts_with($trimmed, 'canvas_profiles.windows.')
+            || str_starts_with($trimmed, 'windows.')
+        ) {
+            return [CanvasProfileKind::WINDOWS, self::window($trimmed)];
+        }
+
+        if (str_starts_with($trimmed, 'tubes.canvas_profiles.panels.')
+            || str_starts_with($trimmed, 'canvas_profiles.panels.')
+            || str_starts_with($trimmed, 'panels.')
+        ) {
+            return [CanvasProfileKind::PANELS, self::panel($trimmed)];
+        }
+
+        $inWindows = self::defined($trimmed, CanvasProfileKind::WINDOWS);
+        $inPanels = self::defined($trimmed, CanvasProfileKind::PANELS);
+
+        if ($inWindows && $inPanels) {
+            throw new InvalidArgumentException(
+                "Canvas profile [{$trimmed}] exists under both windows and panels. "
+                .'Disambiguate with windows.'.$trimmed.' or panels.'.$trimmed.'.'
+            );
+        }
+
+        if ($inPanels) {
+            return [CanvasProfileKind::PANELS, self::panel($trimmed)];
+        }
+
+        if ($inWindows) {
+            return [CanvasProfileKind::WINDOWS, self::window($trimmed)];
+        }
+
+        throw new InvalidArgumentException(
+            "Canvas profile [{$trimmed}] is not defined under tubes.canvas_profiles.windows or .panels."
+        );
+    }
+
+    public static function kindOf(string $name): CanvasProfileKind
+    {
+        return self::locate($name)[0];
+    }
+
+    public static function defined(string $name, CanvasProfileKind $kind): bool
+    {
+        try {
+            self::resolve($name, $kind);
+
+            return true;
+        } catch (InvalidArgumentException) {
+            return false;
+        }
     }
 
     /**

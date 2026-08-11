@@ -46,6 +46,8 @@ Host-packing writers (clip off-surface; bad layer throws):
 
 * `clear(?layer)` / `fill($color, ?layer)`
 * `getPixel` / `setPixel` / `setPixels` / `setSegment`
+* Draw colours may be `0xRRGGBBAA`; `PixelColorPack::packDrawColor` packs into host depth on write (no FormatSpec alloc per pixel).
+* ROW_MAJOR solid `fill` / `setSegment` (TOP_TO_BOTTOM, non-B12): pack once; whole layer via one `str_repeat`, partial via **in-place** byte writes (never per-row `substr_replace` — copies the whole store and destroys FPS).
 * `BOTTOM_TO_TOP` flips Y for logical coordinates
 * Mono uses `BitOrder`; row-major uses `Endianness`; planar maps colour → channel planes
 

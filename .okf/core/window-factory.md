@@ -31,7 +31,7 @@ Factory for **registered** OS window handlers. Companions register `WindowHandle
 
 ```php
 Window::driver('sdl3')->title('Demo')->size(800, 600)->create();
-Window::driver()->title('Demo')->size(800, 600)->create(); // tubes.defaults.window
+Window::driver()->title('Demo')->size(800, 600)->create(); // windows.default driver slug
 Window::driver('sdl3')->title('Demo')->size(800, 600)->open();
 Window::make()->title('Demo')->size(800, 600)->create();
 Window::profile('demo'); // tubes.canvas_profiles.windows.demo
@@ -39,7 +39,7 @@ Window::profile('canvas-window-demo');
 Window::profile('tubes.canvas_profiles.windows.metal-canvas'); // BC alias
 ```
 
-`driver(?string $driver = null)` / `make(?string $driver = null)` use `config('tubes.defaults.window')` (synced to `windows.default` / `WINDOW_DRIVER`) when omitted (default slug `sdl3`).
+`driver(?string $driver = null)` / `make(?string $driver = null)` use `config('windows.default')` when omitted. Presentation default is `tubes.defaults.canvas` (a windows/panels **profile** slug), not a window driver.
 
 `profile(string $name)` hydrates a `PendingWindow` from [tubes canvas profiles](tubes-config.md) (short slug or dotted config path).
 

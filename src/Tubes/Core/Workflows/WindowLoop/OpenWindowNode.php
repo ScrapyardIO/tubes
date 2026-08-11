@@ -31,6 +31,7 @@ class OpenWindowNode extends Node
         }
 
         $shared['window'] = $window;
+        $shared['canvas'] = $window;
         $shared['driver'] = $pending->driver();
         $shared['title'] = $pending->titleValue();
         $shared['width'] = $pending->widthValue();

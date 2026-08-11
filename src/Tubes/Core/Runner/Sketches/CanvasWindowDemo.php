@@ -5,39 +5,43 @@ namespace ScrapyardIO\Tubes\Core\Runner\Sketches;
 use Fabricate\Contracts\Sketches\Attributes\Sketch as SketchAttribute;
 use Fabricate\Contracts\Sketches\SketchLoopResult;
 use Fabricate\Sketches\Sketch;
-use ScrapyardIO\Tubes\Canvas\OSWindow;
+use ScrapyardIO\Tubes\Canvas\Canvas;
+use ScrapyardIO\Tubes\Canvas\PanelIC;
+use ScrapyardIO\Tubes\Core\Enums\CanvasProfileKind;
 use ScrapyardIO\Tubes\Core\MagicAliases\Font;
+use ScrapyardIO\Tubes\Core\MagicAliases\Panel;
 use ScrapyardIO\Tubes\Core\MagicAliases\Window;
 use ScrapyardIO\Tubes\Core\Runner\Sketches\Support\MetalCanvasHud;
 use ScrapyardIO\Tubes\Core\Runner\Sketches\Workflows\MetalCanvasFlow;
+use ScrapyardIO\Tubes\Core\Support\CanvasProfiles;
+use ScrapyardIO\Tubes\Panels\PanelException;
 use ScrapyardIO\Tubes\Rendering\Renderer2D;
-use ScrapyardIO\Tubes\Rendering\SoftRenderer2D;
 use ScrapyardIO\Tubes\Windows\WindowException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
 /**
- * Visible Canvas: WindowHandler + DeferredFramebuffer + Renderer2D ball + HUD text.
+ * Visible Canvas: PanelIC (default) or OSWindow + Renderer2D ball + HUD text.
+ *
+ * With no CLI driver / --profile, opens tubes.defaults.canvas (any windows.* or panels.* profile).
+ * Pass a window driver or --profile=… to force a window profile override.
  *
  * Physics runs on {@see Workflows\BallPhysicsNode} (AsyncNode / Concurrency fiber).
- * Paint uses Renderer2D only (no raw framebuffer draw). On OSWindow drivers with
- * Human Input, left-clicking the ball gives a small acceleration boost for 3 seconds.
- *
- * Window defaults come from tubes.canvas_profiles.windows.canvas-window-demo
- * (override with --profile / CLI driver / geometry flags).
+ * Paint uses Renderer2D only. On OSWindow drivers with Human Input, left-clicking
+ * the ball gives a small acceleration boost for 3 seconds.
  *
  *   ./runner canvas-window-demo
  *   ./runner canvas-window-demo open-gl
  *   ./runner canvas-window-demo vulkan
  *   ./runner canvas-window-demo cuda
  *   ./runner canvas-window-demo sdl3
- *   ./runner canvas-window-demo --profile=metal-canvas --fps=60
+ *   ./runner canvas-window-demo --profile=canvas-window-demo --fps=60
  */
 #[SketchAttribute('canvas-window-demo')]
 class CanvasWindowDemo extends Sketch
 {
-    protected string $description = 'Canvas Renderer2D + AsyncNode ball physics + mouse click boost — profile from tubes.canvas_profiles.windows; Ctrl-C or close window to stop';
+    protected string $description = 'Canvas Renderer2D + AsyncNode ball physics — default tubes.defaults.canvas (window or panel profile); Ctrl-C (or close window) to stop';
 
     /**
      * @var list<string>
@@ -54,20 +58,37 @@ class CanvasWindowDemo extends Sketch
 
     protected ?int $lastPaintNs = null;
 
+    /** CPU partial path: surface cleared once, then erase previous ball/HUD only. */
+    protected bool $surfacePrimed = false;
+
+    protected ?int $lastBallX = null;
+
+    protected ?int $lastBallY = null;
+
+    protected ?int $lastBallR = null;
+
+    /**
+     * Previous HUD lines (for glyph-box erase on partial CPU paints).
+     *
+     * @var list<string>
+     */
+    protected array $lastHudLines = [];
+
+    protected int $lastHudBaselineY = 8;
+
     public function configureCommand(Command $command): void
     {
         $command->addArgument(
             'driver',
             InputArgument::OPTIONAL,
-            'Optional window driver override (metal|open-gl|vulkan|cuda|sdl3). Default: profile driver.',
+            'Optional window driver override (metal|open-gl|vulkan|cuda|sdl3). Omitting driver+profile uses tubes.defaults.canvas.',
         );
 
         $command->addOption(
             'profile',
             null,
             InputOption::VALUE_REQUIRED,
-            'Window profile under tubes.canvas_profiles.windows',
-            'canvas-window-demo',
+            'Window profile under tubes.canvas_profiles.windows (forces window path when set)',
         );
 
         $command->addOption(
@@ -124,7 +145,97 @@ class CanvasWindowDemo extends Sketch
 
         $this->ran = true;
 
-        $profile = $this->resolveProfile();
+        if ($this->wantsDefaultCanvas()) {
+            return $this->runDefaultCanvas();
+        }
+
+        return $this->runWindowCanvas($this->resolveProfile());
+    }
+
+    /**
+     * No driver argument and no --profile → tubes.defaults.canvas (window or panel profile).
+     */
+    protected function wantsDefaultCanvas(): bool
+    {
+        $driverRaw = $this->argument('driver');
+        $hasDriver = is_string($driverRaw) && trim($driverRaw) !== '';
+
+        $profileRaw = $this->option('profile');
+        $hasProfile = is_string($profileRaw) && trim($profileRaw) !== '';
+
+        return ! $hasDriver && ! $hasProfile;
+    }
+
+    protected function runDefaultCanvas(): SketchLoopResult
+    {
+        $slug = $this->resolveDefaultCanvasProfile();
+        if (is_null($slug)) {
+            return SketchLoopResult::STOP;
+        }
+
+        try {
+            [$kind] = CanvasProfiles::locate($slug);
+        } catch (\InvalidArgumentException $exception) {
+            $this->error($exception->getMessage());
+
+            return SketchLoopResult::STOP;
+        }
+
+        return match ($kind) {
+            CanvasProfileKind::PANELS => $this->runPanelCanvas($slug),
+            CanvasProfileKind::WINDOWS => $this->runWindowCanvas($slug),
+        };
+    }
+
+    protected function runPanelCanvas(string $panelProfile): SketchLoopResult
+    {
+        $fps = $this->resolvePositiveInt('fps', 60);
+        if (is_null($fps)) {
+            return SketchLoopResult::STOP;
+        }
+
+        try {
+            $panel = Panel::profile($panelProfile);
+        } catch (PanelException $exception) {
+            $this->error($exception->getMessage());
+
+            return SketchLoopResult::STOP;
+        }
+
+        $this->renderer = $panel->renderer();
+        $width = $panel->width();
+        $height = $panel->height();
+        $this->measuredFps = (float) $fps;
+        $this->lastPaintNs = null;
+        $this->resetPartialPaintState();
+
+        $this->info(
+            "Opening default canvas panel [{$panelProfile}] {$width}x{$height} @{$fps}fps via ".$this->renderer::class
+        );
+
+        $shared = $this->baseShared($width, $height, $fps);
+        $shared['canvas'] = $panel;
+        $shared['panel_profile'] = $panelProfile;
+        $shared['paint'] = function (Canvas $canvas, int $tick) use (&$shared): void {
+            $this->paint($canvas, $tick, $shared);
+        };
+
+        MetalCanvasFlow::makePanel()->run($shared);
+
+        $this->renderer?->unsetFramebuffer();
+        $this->renderer = null;
+
+        if (isset($shared['error']) && is_string($shared['error'])) {
+            $this->error($shared['error']);
+        } else {
+            $this->info("Panel canvas [{$panelProfile}] stopped after ".(int) ($shared['tick'] ?? 0).' ticks.');
+        }
+
+        return SketchLoopResult::STOP;
+    }
+
+    protected function runWindowCanvas(?string $profile): SketchLoopResult
+    {
         if (is_null($profile)) {
             return SketchLoopResult::STOP;
         }
@@ -158,27 +269,11 @@ class CanvasWindowDemo extends Sketch
         $this->renderer = $this->resolveRenderer($driver);
         $this->measuredFps = (float) $fps;
         $this->lastPaintNs = null;
+        $this->resetPartialPaintState();
         $this->info("Opening profile [{$profile}] → [{$driver}] {$width}x{$height} @{$fps}fps — {$title} via ".$this->renderer::class);
 
-        $radius = 24;
-        $shared = [
-            'profile' => $profile,
-            'fps' => $fps,
-            'restitution' => 0.85,
-            'should_stop' => fn (): bool => $this->stopRequested,
-            'ball' => [
-                'x' => $width / 2,
-                'y' => $height / 2,
-                // px/s — not proportional to 4:3 (avoids immediate corner-to-corner orbit).
-                // ~7.1 / 2.4 px/frame at 60fps.
-                'vx' => 426.0,
-                'vy' => 144.0,
-                'ax' => 0.0,
-                'ay' => 0.0,
-                'r' => $radius,
-            ],
-            'paint' => null,
-        ];
+        $shared = $this->baseShared($width, $height, $fps);
+        $shared['profile'] = $profile;
 
         if ($driver !== $pending->driver()) {
             $shared['driver'] = $driver;
@@ -196,8 +291,8 @@ class CanvasWindowDemo extends Sketch
             $shared['height'] = $heightOverride;
         }
 
-        $shared['paint'] = function (OSWindow $window, int $tick) use (&$shared): void {
-            $this->paint($window, $tick, $shared);
+        $shared['paint'] = function (Canvas $canvas, int $tick) use (&$shared): void {
+            $this->paint($canvas, $tick, $shared);
         };
 
         MetalCanvasFlow::make()->run($shared);
@@ -216,22 +311,60 @@ class CanvasWindowDemo extends Sketch
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    protected function baseShared(int $width, int $height, int $fps): array
+    {
+        $radius = 24;
+
+        return [
+            'fps' => $fps,
+            'restitution' => 0.85,
+            'should_stop' => fn (): bool => $this->stopRequested,
+            'width' => $width,
+            'height' => $height,
+            'ball' => [
+                'x' => $width / 2,
+                'y' => $height / 2,
+                // px/s — not proportional to 4:3 (avoids immediate corner-to-corner orbit).
+                // ~7.1 / 2.4 px/frame at 60fps.
+                'vx' => 426.0,
+                'vy' => 144.0,
+                'ax' => 0.0,
+                'ay' => 0.0,
+                'r' => $radius,
+            ],
+            'paint' => null,
+        ];
+    }
+
+    /**
      * Renderer2D frame — ball pose from AsyncNode physics; HUD via DrawsText.
+     *
+     * CPU PanelIC + SupportsPartialRefresh + dirty/page FB: prime once, then erase
+     * previous ball/HUD damage only so flush emits PARTIAL (not FULL every frame).
+     * OSWindow / full-surface FB keeps a clear each frame.
      *
      * @param  array<string, mixed>  $shared
      */
-    protected function paint(OSWindow $window, int $tick, array $shared): void
+    protected function paint(Canvas $canvas, int $tick, array $shared): void
     {
         $renderer = $this->renderer;
         if (is_null($renderer)) {
             return;
         }
 
-        $now = hrtime(true);
-        if (! is_null($this->lastPaintNs)) {
-            $this->measuredFps = MetalCanvasHud::blendFps($this->measuredFps, $now - $this->lastPaintNs);
+        // Prefer paint+present work_ns (excludes FramePace sleep). Fall back to wall Δt.
+        $workNs = $shared['work_ns'] ?? null;
+        if (is_int($workNs) && $workNs > 0) {
+            $this->measuredFps = MetalCanvasHud::blendFps($this->measuredFps, $workNs);
+        } else {
+            $now = hrtime(true);
+            if (! is_null($this->lastPaintNs)) {
+                $this->measuredFps = MetalCanvasHud::blendFps($this->measuredFps, $now - $this->lastPaintNs);
+            }
+            $this->lastPaintNs = $now;
         }
-        $this->lastPaintNs = $now;
 
         $ball = is_array($shared['ball'] ?? null) ? $shared['ball'] : [];
         $targetFps = is_int($shared['fps'] ?? null) ? $shared['fps'] : 60;
@@ -243,30 +376,61 @@ class CanvasWindowDemo extends Sketch
         $speed = MetalCanvasHud::speed($vx, $vy);
         $accent = MetalCanvasHud::accentForSpeed($speed);
 
-        $fb = $window->framebuffer();
+        $fb = $canvas->framebuffer();
         $renderer->setFramebuffer($fb);
 
         try {
+            // Draw colours are always 0xRRGGBBAA. PanelIC::present() packs to the IC FormatSpec.
             $bg = 0x141820FF;
             $hud = 0xE8ECF0FF;
             $dot = 0xFFFFFFFF;
 
             $r = max(1, (int) ($ball['r'] ?? 24));
-            $x = (int) round((float) ($ball['x'] ?? $window->width() / 2));
-            $y = (int) round((float) ($ball['y'] ?? $window->height() / 2));
+            $x = (int) round((float) ($ball['x'] ?? $canvas->width() / 2));
+            $y = (int) round((float) ($ball['y'] ?? $canvas->height() / 2));
+
+            $partial = $this->usesCpuPartialPaint($canvas);
+            $paintHud = (! $partial) || ($tick % 6 === 0);
+
+            if (! $partial || ! $this->surfacePrimed) {
+                $renderer->fill($bg);
+                $this->surfacePrimed = true;
+                $this->lastBallX = null;
+                $this->lastBallY = null;
+                $this->lastBallR = null;
+                $this->lastHudLines = [];
+            } else {
+                if (! is_null($this->lastBallX) && ! is_null($this->lastBallY) && ! is_null($this->lastBallR)) {
+                    if ($this->lastBallX !== $x || $this->lastBallY !== $y || $this->lastBallR !== $r) {
+                        $renderer->fillCircle(
+                            $this->lastBallX,
+                            $this->lastBallY,
+                            $this->lastBallR + 1,
+                            $bg,
+                        );
+                    }
+                }
+
+                if ($paintHud) {
+                    $this->eraseHudGlyphBoxes($renderer, $bg);
+                }
+            }
 
             $renderer
-                ->fill($bg)
                 ->fillCircle($x, $y, $r, $accent)
                 ->drawCircle($x, $y, $r, $dot)
-                ->drawPixel((int) ($window->width() / 2), (int) ($window->height() / 2), $dot);
+                ->drawPixel((int) ($canvas->width() / 2), (int) ($canvas->height() / 2), $dot);
+
+            $this->lastBallX = $x;
+            $this->lastBallY = $y;
+            $this->lastBallR = $r;
 
             $boostRemaining = is_float($shared['click_boost_remaining'] ?? null)
                 || is_int($shared['click_boost_remaining'] ?? null)
                 ? (float) $shared['click_boost_remaining']
                 : 0.0;
 
-            $this->paintHud($renderer, MetalCanvasHud::lines(
+            $hudLines = MetalCanvasHud::lines(
                 $vx,
                 $vy,
                 $ax,
@@ -275,9 +439,57 @@ class CanvasWindowDemo extends Sketch
                 $accent,
                 $targetFps,
                 $boostRemaining,
-            ), $hud, $bg);
+            );
+
+            // ~10Hz HUD on partial CPU path — digit churn must not enlarge dirty SPI.
+            if ($paintHud) {
+                $this->paintHud($renderer, $hudLines, $hud, $bg);
+                $this->lastHudLines = $hudLines;
+            }
         } finally {
-            $renderer->unsetFramebuffer();
+            // PanelIC owns the renderer↔FB binding; leave it set after paint.
+            if (! $canvas instanceof PanelIC) {
+                $renderer->unsetFramebuffer();
+            }
+        }
+    }
+
+    /**
+     * CPU PanelIC only: chip SupportsPartialRefresh + FB damage smaller than full surface.
+     */
+    protected function usesCpuPartialPaint(Canvas $canvas): bool
+    {
+        return $canvas instanceof PanelIC && $canvas->supportsPartialRefresh();
+    }
+
+    protected function resetPartialPaintState(): void
+    {
+        $this->surfacePrimed = false;
+        $this->lastBallX = null;
+        $this->lastBallY = null;
+        $this->lastBallR = null;
+        $this->lastHudLines = [];
+        $this->lastHudBaselineY = 8;
+    }
+
+    /**
+     * Erase previous HUD glyph boxes only (never a full HUD band — that coalesces
+     * with the ball into huge SPI rects).
+     */
+    protected function eraseHudGlyphBoxes(Renderer2D $renderer, int $bg): void
+    {
+        if ($this->lastHudLines === []) {
+            return;
+        }
+
+        $cellW = 6;
+        $cellH = 8;
+        $y = $this->lastHudBaselineY;
+
+        foreach ($this->lastHudLines as $line) {
+            $w = max($cellW, strlen($line) * $cellW);
+            $renderer->fillRect(8, max(0, $y - $cellH + 2), $w + 2, $cellH + 2, $bg);
+            $y += $cellH + 2;
         }
     }
 
@@ -301,12 +513,15 @@ class CanvasWindowDemo extends Sketch
             ? Font::font($fontArg)
             : Font::driver();
 
+        $baseline = MetalCanvasHud::hudBaselineY($fontInstance);
+        $this->lastHudBaselineY = $baseline;
+
         $renderer
             ->setFont($fontArg)
             ->setTextSize(1)
             ->setTextWrap(false)
             ->setTextColor($fg, $bg)
-            ->setCursor(8, MetalCanvasHud::hudBaselineY($fontInstance));
+            ->setCursor(8, $baseline);
 
         foreach ($lines as $line) {
             $renderer->println($line);
@@ -314,6 +529,24 @@ class CanvasWindowDemo extends Sketch
 
         // Restore default font so later frames do not accumulate baseline shifts unexpectedly.
         $renderer->setFont(null);
+    }
+
+    protected function resolveDefaultCanvasProfile(): ?string
+    {
+        $raw = config('tubes.defaults.canvas');
+        $profile = is_string($raw) ? trim($raw) : '';
+
+        if ($profile === '') {
+            $this->error(
+                'No default canvas configured. Set tubes.defaults.canvas to a canvas_profiles '
+                .'windows.* or panels.* slug (e.g. st7796-front, canvas-window-demo), '
+                .'or pass a window driver / --profile=….'
+            );
+
+            return null;
+        }
+
+        return $profile;
     }
 
     protected function resolveRenderer(string $driver): Renderer2D
@@ -332,7 +565,10 @@ class CanvasWindowDemo extends Sketch
             return new $class;
         }
 
-        return new SoftRenderer2D;
+        throw new \RuntimeException(
+            "Canvas window driver [{$driver}] requires its engine Renderer2D companion "
+            .'(tubes ships DrawingAPI/Renderer2D contracts only — no CPU renderer fallback).'
+        );
     }
 
     protected function resolveProfile(): ?string
@@ -341,9 +577,7 @@ class CanvasWindowDemo extends Sketch
         $profile = is_string($raw) ? trim($raw) : '';
 
         if ($profile === '') {
-            $this->error('Option --profile must be a non-empty canvas window profile slug.');
-
-            return null;
+            return 'canvas-window-demo';
         }
 
         return $profile;

@@ -25,7 +25,9 @@ The final abstract **output** resolves to one of two sibling concretes:[^angel-a
 
 These are **siblings** under the abstract output — **not** “a Window that can be an IC.”[^angel-arch]
 
-On disk: `Canvas` (`OSWindow` | `PanelIC`) plus `Windows/WindowHandler` for companion OS drivers.[^scaffold]
+**Consumers** type-hint `Canvas` and treat Window / PanelIC as interchangeable (`framebuffer` → draw → `present`). Be concrete (`OSWindow` / `PanelIC`) only when you need window events, Circuit IC access, or panel lane pairing.
+
+On disk: `Canvas` (`OSWindow` | `PanelIC`) plus `Windows/WindowHandler` for OS drivers and `Panels/PanelManager` for IC wraps.[^scaffold]
 
 # Intended pipeline
 
@@ -33,11 +35,13 @@ On disk: `Canvas` (`OSWindow` | `PanelIC`) plus `Windows/WindowHandler` for comp
 draw logic  →  framebuffer  →  canvas present
                  ↑                    ↑
          Deferred (window)      WindowHandler.presentNative
-         Managed (panel IC)     PanelIC.present (transmit)
+         Managed|Deferred       PanelIC.present → IC.transmit
+         (panel IC)
 ```
 
 - **Framebuffer** is the shared medium between drawing and presentation.[^angel-arch]
-- **OS Window:** companion `WindowHandler` defines `FormatSpec` at construct and binds its package DeferredFramebuffer — present is native (no PHP flush remux).
+- **OS Window:** engine-bound — companion `WindowHandler` owns that engine’s DeferredFramebuffer; present is native.
+- **IC Panel:** owns device + FB + Renderer2D. CPU: Managed + companion CPU renderer (phpdafruit). Engine: **headless** Deferred + same engine Renderer2D. Present always `flush(IC FormatSpec)` → `transmit`. Tubes does not ship a CPU renderer.[^scaffold]
 - The **renderer / draw logic** should not care whether the sink is an OS Window or an IC Panel.[^angel-arch]
 - **Present** is the canvas / handler’s job after pixels land in the buffer.
 
@@ -45,14 +49,15 @@ draw logic  →  framebuffer  →  canvas present
 
 | Path | Notes |
 |------|-------|
-| Window / embedded | Can come **first** while reconstituting |
-| IC Panel | Depends on restoring IC / circuits functionality **later**[^angel-arch] |
+| Window / embedded | Landed first (gfx companions) |
+| IC Panel | Wrap + PreferredManaged + `useFramebuffer` for engine buffers |
 
 # Related
 
 - [Window ≠ IC Panel](../traps/window-vs-ic-panel.md)
 - [Draw / buffer / output ownership](../traps/draw-buffer-output.md)
+- [Panel factory](../core/panel-factory.md)
 - [FramebuffersServiceProvider](../core/framebuffers-service-provider.md)
 
 [^angel-arch]: Angel architecture decisions for tubes 0.7 (session brief)
-[^scaffold]: `Canvas`/`OSWindow`/`WindowHandler`/`WindowManager` on disk; `PanelIC` still a stub; gfx handlers stub native boot until companions fill them.
+[^scaffold]: `Canvas`/`OSWindow`/`WindowHandler`/`PanelIC` + `PanelManager` on disk; SSD1306 / ST77xx implement panel contracts.

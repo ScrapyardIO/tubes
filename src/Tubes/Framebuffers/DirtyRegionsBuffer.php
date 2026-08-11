@@ -101,30 +101,50 @@ final class DirtyRegionsBuffer extends ManagedFramebuffer
             return [];
         }
 
-        if (! $this->formatSpecsMatch($this->hostFormat(), $spec)) {
-            throw new RuntimeException(
-                'DirtyRegionsBuffer flush FormatSpec must match the host store (region transcode not implemented).'
-            );
+        // Coalesce once here — markDirty only appends (circle VLines must not O(n²) merge).
+        $regions = $this->coalesceDirtyRegions($this->dirty_regions);
+        $this->dirty_regions = [];
+
+        // Whole-surface dirty + matching host → one FULL dump (DamageGranularity / RenderType).
+        if (
+            count($regions) === 1
+            && $this->formatSpecsMatch($this->hostFormat(), $spec)
+        ) {
+            [$left, $top, $right, $bottom] = $regions[0];
+            if (
+                $left === 0
+                && $top === 0
+                && $right === ($this->viewportWidth() - 1)
+                && $bottom === ($this->viewportHeight() - 1)
+            ) {
+                return [
+                    new DumpedBuffer(
+                        RenderType::FULL,
+                        $spec,
+                        $this->dump(),
+                        width: $this->viewportWidth(),
+                        height: $this->viewportHeight(),
+                    ),
+                ];
+            }
         }
 
         $updates = [];
 
-        foreach ($this->dirty_regions as [$left, $top, $right, $bottom]) {
+        foreach ($regions as [$left, $top, $right, $bottom]) {
             $width = ($right - $left) + 1;
             $height = ($bottom - $top) + 1;
 
             $updates[] = new DumpedBuffer(
                 RenderType::PARTIAL,
                 $spec,
-                $this->dumpRegion($left, $top, $width, $height),
+                $this->dumpRegionForSpec($left, $top, $width, $height, $spec),
                 origin_x: $left,
                 origin_y: $top,
                 width: $width,
                 height: $height,
             );
         }
-
-        $this->dirty_regions = [];
 
         return $updates;
     }
@@ -143,28 +163,53 @@ final class DirtyRegionsBuffer extends ManagedFramebuffer
             return;
         }
 
-        $merged = true;
+        $this->dirty_regions[] = [$left, $top, $right, $bottom];
+    }
 
-        while ($merged) {
-            $merged = false;
-
-            foreach ($this->dirty_regions as $index => [$region_left, $region_top, $region_right, $region_bottom]) {
-                $touches = ($left <= $region_right + 1) && ($region_left <= $right + 1)
-                    && ($top <= $region_bottom + 1) && ($region_top <= $bottom + 1);
-
-                if ($touches) {
-                    $left = min($left, $region_left);
-                    $top = min($top, $region_top);
-                    $right = max($right, $region_right);
-                    $bottom = max($bottom, $region_bottom);
-
-                    unset($this->dirty_regions[$index]);
-                    $merged = true;
-                }
-            }
+    /**
+     * @param  array<int, array{0: int, 1: int, 2: int, 3: int}>  $regions
+     * @return array<int, array{0: int, 1: int, 2: int, 3: int}>
+     */
+    protected function coalesceDirtyRegions(array $regions): array
+    {
+        if ($regions === []) {
+            return [];
         }
 
-        $this->dirty_regions[] = [$left, $top, $right, $bottom];
+        $pending = array_values($regions);
+        $merged = [];
+
+        while ($pending !== []) {
+            [$left, $top, $right, $bottom] = array_shift($pending);
+            $grew = true;
+
+            while ($grew) {
+                $grew = false;
+                $next = [];
+
+                foreach ($pending as $region) {
+                    [$region_left, $region_top, $region_right, $region_bottom] = $region;
+                    $touches = ($left <= $region_right + 1) && ($region_left <= $right + 1)
+                        && ($top <= $region_bottom + 1) && ($region_top <= $bottom + 1);
+
+                    if ($touches) {
+                        $left = min($left, $region_left);
+                        $top = min($top, $region_top);
+                        $right = max($right, $region_right);
+                        $bottom = max($bottom, $region_bottom);
+                        $grew = true;
+                    } else {
+                        $next[] = $region;
+                    }
+                }
+
+                $pending = $next;
+            }
+
+            $merged[] = [$left, $top, $right, $bottom];
+        }
+
+        return $merged;
     }
 
     protected function guardRowMajor(): void

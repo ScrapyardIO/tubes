@@ -5,6 +5,7 @@ namespace ScrapyardIO\Tubes\Framebuffers;
 use ScrapyardIO\Tubes\Contracts\Framebuffers\FormatSpec;
 use ScrapyardIO\Tubes\Contracts\Framebuffers\ManagedFramebuffer as ManagedFramebufferContract;
 use ScrapyardIO\Tubes\Contracts\Framebuffers\PixelStore as PixelStoreContract;
+use ScrapyardIO\Tubes\Framebuffers\Support\PixelColorPack;
 
 /**
  * Software-owned framebuffer: PixelStore + dirty/flush policy.
@@ -95,7 +96,8 @@ abstract class ManagedFramebuffer extends Framebuffer implements ManagedFramebuf
     }
 
     /**
-     * Host packed bytes, or a pixel-copy re-encode when flush spec ≠ host.
+     * Canvas dump contract: host FormatSpec == flush target → return host bytes
+     * unchanged (Window or PanelIC). Convert only when specs differ.
      */
     protected function bytesForSpec(FormatSpec $spec): string
     {
@@ -117,15 +119,23 @@ abstract class ManagedFramebuffer extends Framebuffer implements ManagedFramebuf
             && ($left->palette === $right->palette);
     }
 
+    /**
+     * Foreign flush only — never used when Canvas FormatSpec matches the FB host.
+     */
     protected function transcodeEntireSurface(FormatSpec $target): string
     {
         $width = $this->viewportWidth();
         $height = $this->viewportHeight();
+        $host = $this->hostFormat();
         $temp = new PixelStore($width, $height, $target, 1);
 
         for ($y = 0; $y < $height; $y++) {
             for ($x = 0; $x < $width; $x++) {
-                $temp->setPixel($x, $y, $this->getPixel($x, $y));
+                $temp->putPacked(
+                    $x,
+                    $y,
+                    PixelColorPack::convert($this->getPixel($x, $y), $host, $target),
+                );
             }
         }
 
@@ -137,15 +147,58 @@ abstract class ManagedFramebuffer extends Framebuffer implements ManagedFramebuf
      */
     protected function dumpRegion(int $x, int $y, int $width, int $height): string
     {
+        return $this->dumpRegionForSpec($x, $y, $width, $height, $this->hostFormat());
+    }
+
+    /**
+     * Region dump for flush.
+     *
+     * Matching FormatSpec → host bytes only (ROW_MAJOR memcpy when possible).
+     * Mismatch → PixelColorPack (engine / foreign flush only).
+     */
+    protected function dumpRegionForSpec(
+        int $x,
+        int $y,
+        int $width,
+        int $height,
+        FormatSpec $target,
+    ): string {
         if (($width < 1) || ($height < 1)) {
             return '';
         }
 
-        $temp = new PixelStore($width, $height, $this->hostFormat(), 1);
+        $host = $this->hostFormat();
+
+        if ($this->formatSpecsMatch($host, $target)) {
+            if ($this->pixel_store instanceof PixelStore) {
+                $fast = $this->pixel_store->dumpRowMajorRegion($x, $y, $width, $height);
+                if (is_string($fast)) {
+                    return $fast;
+                }
+            }
+
+            // Match but non-ROW_MAJOR / unsupported fast path: still no colour convert —
+            // copy host-native pixel values into a same-spec temp store.
+            $temp = new PixelStore($width, $height, $host, 1);
+
+            for ($row = 0; $row < $height; $row++) {
+                for ($col = 0; $col < $width; $col++) {
+                    $temp->putPacked($col, $row, $this->getPixel($x + $col, $y + $row));
+                }
+            }
+
+            return $temp->dump();
+        }
+
+        $temp = new PixelStore($width, $height, $target, 1);
 
         for ($row = 0; $row < $height; $row++) {
             for ($col = 0; $col < $width; $col++) {
-                $temp->setPixel($col, $row, $this->getPixel($x + $col, $y + $row));
+                $temp->putPacked(
+                    $col,
+                    $row,
+                    PixelColorPack::convert($this->getPixel($x + $col, $y + $row), $host, $target),
+                );
             }
         }
 

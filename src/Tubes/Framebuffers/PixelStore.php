@@ -11,6 +11,7 @@ use ScrapyardIO\Tubes\Contracts\Framebuffers\Enums\PixelFormat;
 use ScrapyardIO\Tubes\Contracts\Framebuffers\Enums\ScanDirection;
 use ScrapyardIO\Tubes\Contracts\Framebuffers\FormatSpec;
 use ScrapyardIO\Tubes\Contracts\Framebuffers\PixelStore as PixelStoreContract;
+use ScrapyardIO\Tubes\Framebuffers\Support\PixelColorPack;
 
 /**
  * Packed binary pixel blob sized from a host FormatSpec.
@@ -96,6 +97,38 @@ class PixelStore implements PixelStoreContract
         );
     }
 
+    /**
+     * Fast ROW_MAJOR region extract (memcpy rows). Empty string when unsupported.
+     */
+    public function dumpRowMajorRegion(int $x, int $y, int $width, int $height, int $layer = 0): ?string
+    {
+        if (
+            $this->host_format->pixel_format !== PixelFormat::ROW_MAJOR
+            || $this->host_format->bit_depth === BitDepth::B12
+            || $width < 1
+            || $height < 1
+            || $x < 0
+            || $y < 0
+            || ($x + $width) > $this->width
+            || ($y + $height) > $this->height
+        ) {
+            return null;
+        }
+
+        $bytesPerPixel = intdiv($this->host_format->bit_depth->value + 7, 8);
+        $stride = $this->width * $bytesPerPixel;
+        $rowBytes = $width * $bytesPerPixel;
+        $base = $this->layerOffset($layer);
+        $out = '';
+
+        for ($row = 0; $row < $height; $row++) {
+            $offset = $base + (($y + $row) * $stride) + ($x * $bytesPerPixel);
+            $out .= substr($this->pixels, $offset, $rowBytes);
+        }
+
+        return $out;
+    }
+
     public function clear(?int $layer = null): static
     {
         if (is_null($layer)) {
@@ -148,6 +181,24 @@ class PixelStore implements PixelStoreContract
 
     public function setPixel(int $x, int $y, int $color, int $layer = 0): static
     {
+        return $this->writePixel(
+            $x,
+            $y,
+            PixelColorPack::packDrawColor($color, $this->host_format),
+            $layer,
+        );
+    }
+
+    /**
+     * Write a host-native packed colour (RGB565 etc.) — no 0xRRGGBBAA conversion.
+     */
+    public function putPacked(int $x, int $y, int $packed, int $layer = 0): static
+    {
+        return $this->writePixel($x, $y, $packed, $layer);
+    }
+
+    protected function writePixel(int $x, int $y, int $packed, int $layer = 0): static
+    {
         if (! $this->contains($x, $y)) {
             return $this;
         }
@@ -156,10 +207,10 @@ class PixelStore implements PixelStoreContract
         [$mx, $my] = $this->mapLogical($x, $y);
 
         match ($this->host_format->pixel_format) {
-            PixelFormat::MONO_VERTICAL_PAGE => $this->setMonoVerticalPage($base, $mx, $my, $color),
-            PixelFormat::MONO_HORIZONTAL => $this->setMonoHorizontal($base, $mx, $my, $color),
-            PixelFormat::PLANAR => $this->setPlanar($base, $mx, $my, $color),
-            PixelFormat::ROW_MAJOR => $this->setRowMajor($base, $mx, $my, $color),
+            PixelFormat::MONO_VERTICAL_PAGE => $this->setMonoVerticalPage($base, $mx, $my, $packed),
+            PixelFormat::MONO_HORIZONTAL => $this->setMonoHorizontal($base, $mx, $my, $packed),
+            PixelFormat::PLANAR => $this->setPlanar($base, $mx, $my, $packed),
+            PixelFormat::ROW_MAJOR => $this->setRowMajor($base, $mx, $my, $packed),
         };
 
         return $this;
@@ -180,6 +231,10 @@ class PixelStore implements PixelStoreContract
             return $this;
         }
 
+        if ($this->fillRowMajorSolid($x, $y, $width, $height, $color, $layer)) {
+            return $this;
+        }
+
         for ($row = 0; $row < $height; $row++) {
             for ($col = 0; $col < $width; $col++) {
                 $this->setPixel($x + $col, $y + $row, $color, $layer);
@@ -192,12 +247,6 @@ class PixelStore implements PixelStoreContract
     protected function fillLayer(int $color, int $layer): void
     {
         $this->layerOffset($layer);
-
-        if ($color === 0) {
-            $this->clear($layer);
-
-            return;
-        }
 
         $format = $this->host_format->pixel_format;
 
@@ -215,7 +264,99 @@ class PixelStore implements PixelStoreContract
             return;
         }
 
+        if ($this->fillRowMajorSolid(0, 0, $this->width, $this->height, $color, $layer)) {
+            return;
+        }
+
+        if ($color === 0) {
+            $this->clear($layer);
+
+            return;
+        }
+
         $this->setSegment(0, 0, $this->width, $this->height, $color, $layer);
+    }
+
+    /**
+     * ROW_MAJOR solid fill: pack draw colour once, stamp pixel bytes (no per-pixel convert).
+     */
+    protected function fillRowMajorSolid(
+        int $x,
+        int $y,
+        int $width,
+        int $height,
+        int $color,
+        int $layer,
+    ): bool {
+        if (
+            $this->host_format->pixel_format !== PixelFormat::ROW_MAJOR
+            || $this->host_format->bit_depth === BitDepth::B12
+            || $this->host_format->scan_direction !== ScanDirection::TOP_TO_BOTTOM
+        ) {
+            return false;
+        }
+
+        $x = max(0, $x);
+        $y = max(0, $y);
+        $right = min($this->width, $x + $width);
+        $bottom = min($this->height, $y + $height);
+        $width = $right - $x;
+        $height = $bottom - $y;
+
+        if (($width < 1) || ($height < 1)) {
+            return true;
+        }
+
+        $native = PixelColorPack::packDrawColor($color, $this->host_format);
+        $pixel = $this->rowMajorPixelBytes($native);
+        $bytesPerPixel = strlen($pixel);
+        $stride = $this->width * $bytesPerPixel;
+        $rowBytes = $width * $bytesPerPixel;
+        $base = $this->layerOffset($layer);
+
+        // Whole layer: one allocation. Partial: in-place byte writes — never loop
+        // substr_replace (each rewrite copies the entire store and tanks FPS).
+        if ($x === 0 && $y === 0 && $width === $this->width && $height === $this->height) {
+            $this->pixels = substr_replace(
+                $this->pixels,
+                str_repeat($pixel, $this->width * $this->height),
+                $base,
+                $this->layer_byte_length,
+            );
+
+            return true;
+        }
+
+        $rowPattern = str_repeat($pixel, $width);
+
+        // Force string separation once, then mutate in place.
+        if ($this->pixels !== '') {
+            $this->pixels[0] = $this->pixels[0];
+        }
+
+        for ($row = 0; $row < $height; $row++) {
+            $offset = $base + (($y + $row) * $stride) + ($x * $bytesPerPixel);
+
+            for ($i = 0; $i < $rowBytes; $i++) {
+                $this->pixels[$offset + $i] = $rowPattern[$i];
+            }
+        }
+
+        return true;
+    }
+
+    protected function rowMajorPixelBytes(int $nativeColor): string
+    {
+        $bytesPerPixel = intdiv($this->host_format->bit_depth->value + 7, 8);
+        $msbFirst = $this->host_format->endianness !== Endianness::LSB;
+        $out = '';
+
+        for ($i = 0; $i < $bytesPerPixel; $i++) {
+            $shift = $msbFirst ? (($bytesPerPixel - 1 - $i) * 8) : ($i * 8);
+            $out .= chr(($nativeColor >> $shift) & 0xFF);
+        }
+
+        return $out;
     }
 
     /**
@@ -378,6 +519,7 @@ class PixelStore implements PixelStoreContract
             return;
         }
 
+        // $color is host-native (caller packs 0xRRGGBBAA via setPixel / fillRowMajorSolid).
         $bytes_per_pixel = intdiv($this->host_format->bit_depth->value + 7, 8);
         $offset = $base + ((($y * $this->width) + $x) * $bytes_per_pixel);
         $msb_first = $this->host_format->endianness !== Endianness::LSB;

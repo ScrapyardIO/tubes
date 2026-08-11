@@ -6,8 +6,14 @@ use ScrapyardIO\Tubes\Rendering\Concerns\DrawsText;
 use ScrapyardIO\Tubes\Rendering\Renderer2D;
 
 /**
- * Soft Renderer2D fallback for package sketches (no gfx companion) — forwards DrawingAPI calls to the
- * borrowed framebuffer. Not a microscrap gfx driver; companions override later.
+ * Internal DrawingAPI forwarder used by some package tests / UX unit tests.
+ *
+ * Tubes does **not** ship a product CPU renderer. Production CPU drawing belongs
+ * in companion packages (e.g. `microscrap/phpdafruit-gfx`). Window sketches must
+ * load the matching engine `*Renderer2D`; PanelIC requires an explicit companion
+ * renderer via `Panel::…->renderer($r)`.
+ *
+ * @internal
  */
 class SoftRenderer2D extends Renderer2D
 {

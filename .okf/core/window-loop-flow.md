@@ -33,16 +33,18 @@ OpenWindowNode → PaintTickNode ⇄ (continue) → CloseWindowNode (stop)
 
 | Key | Purpose |
 |-----|---------|
-| `profile` | Preferred — `Window::profile()` slug / dotted path |
-| `driver` | Window slug (`metal`, `sdl3`, …); optional override when `profile` set |
-| `title` / `width` / `height` | OSWindow open args / optional profile overrides |
-| `paint` | `callable(OSWindow, int $tick): void` — hand-draw or future engine |
+| `profile` / `panel_profile` | Window or panel profile slug |
+| `driver` | Window slug (`metal`, `sdl3`, …); optional override when window `profile` set |
+| `title` / `width` / `height` | OSWindow open args / optional profile overrides; panel fills size from IC |
+| `paint` | `callable(Canvas, int $tick): void` |
 | `should_stop` / `runner` | Cooperative exit |
-| `window` / `tick` | Runtime state |
+| `canvas` / `window` / `tick` | Runtime state (`canvas` preferred; `window` BC for OSWindow) |
+
+`PaintTickNode` presents any `Canvas`; `pollEvents` / `shouldClose` only when the surface is an `OSWindow`. `OpenPanelNode` opens `Panel::profile(...)` into `shared['canvas']`. `CloseWindowNode` closes whichever Canvas is bound.
 
 # Evolution
 
-Swap `paint` for a tubes rendering-engine tick without changing the graph. Package sketch: [CanvasWindowDemo](metal-canvas-sketch.md) — `MetalCanvasFlow` (AsyncFlow) runs `BallPhysicsNode` (AsyncNode / fiber) then `PaintTickNode`; paint draws via `Renderer2D` (`./runner canvas-window-demo [driver?] --profile=canvas-window-demo`).
+Swap `paint` for a tubes rendering-engine tick without changing the graph. Package sketch: [CanvasWindowDemo](metal-canvas-sketch.md) — `MetalCanvasFlow::make()` (window) or `makePanel()`; `BallPhysicsNode` + `PaintTickNode`; paint draws via `Renderer2D`.
 
 # Related
 

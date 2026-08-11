@@ -305,6 +305,12 @@ class WindowManager implements WindowFactory
 
     protected function resolveConfiguredDefault(string $alias, string $fallback): string
     {
+        // Window *driver* slug comes from windows.default only.
+        // tubes.defaults.canvas is a profile slug (windows.* or panels.*), not a driver.
+        if ($alias === 'window') {
+            return strtolower($fallback);
+        }
+
         if (function_exists('config')) {
             $fromTubes = config("tubes.defaults.{$alias}");
             if (is_string($fromTubes) && $fromTubes !== '') {

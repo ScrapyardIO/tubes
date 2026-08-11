@@ -11,6 +11,7 @@ use ScrapyardIO\Tubes\Core\Runner\Sketches\CanvasWindowDemo;
 use ScrapyardIO\Tubes\Fonts\Console\FontMakeCommand;
 use ScrapyardIO\Tubes\Fonts\Providers\FontsServiceProvider;
 use ScrapyardIO\Tubes\Framebuffers\Providers\FramebuffersServiceProvider;
+use ScrapyardIO\Tubes\Panels\Providers\PanelsServiceProvider;
 use ScrapyardIO\Tubes\Windows\Providers\WindowsServiceProvider;
 
 class TubesServiceProvider extends AggregateServiceProvider
@@ -18,6 +19,7 @@ class TubesServiceProvider extends AggregateServiceProvider
     protected array $providers = [
         FramebuffersServiceProvider::class,
         WindowsServiceProvider::class,
+        PanelsServiceProvider::class,
         FontsServiceProvider::class,
     ];
 
@@ -56,7 +58,7 @@ class TubesServiceProvider extends AggregateServiceProvider
     }
 
     /**
-     * Contribute Window / Framebuffer / Font defaults to Workshop `about` Drivers.
+     * Contribute Canvas / Framebuffer / Font defaults to Workshop `about` Drivers.
      */
     protected function registerAboutDrivers(): void
     {
@@ -66,7 +68,7 @@ class TubesServiceProvider extends AggregateServiceProvider
 
         AboutCommand::add('Drivers', function (): array {
             return array_filter([
-                'Windows' => config('tubes.defaults.window') ?: config('windows.default'),
+                'Canvas' => config('tubes.defaults.canvas'),
                 'Framebuffers' => config('tubes.defaults.framebuffer') ?: config('framebuffers.default'),
                 'Fonts' => config('tubes.defaults.font') ?: config('fonts.default'),
             ], static fn (mixed $value): bool => is_string($value) && $value !== '');
@@ -74,7 +76,10 @@ class TubesServiceProvider extends AggregateServiceProvider
     }
 
     /**
-     * Keep windows/framebuffers/fonts.default aligned with tubes.defaults.*.
+     * Keep framebuffers/fonts.default aligned with tubes.defaults.*.
+     *
+     * Window driver fallback stays on config('windows.default') — presentation
+     * defaults use tubes.defaults.canvas (a windows.* or panels.* profile slug).
      */
     protected function syncSubsystemDefaults(): void
     {
@@ -83,11 +88,6 @@ class TubesServiceProvider extends AggregateServiceProvider
         }
 
         $config = $this->container->make('config');
-
-        $window = $config->get('tubes.defaults.window');
-        if (is_string($window) && $window !== '') {
-            $config->set('windows.default', $window);
-        }
 
         $framebuffer = $config->get('tubes.defaults.framebuffer');
         if (is_string($framebuffer) && $framebuffer !== '') {

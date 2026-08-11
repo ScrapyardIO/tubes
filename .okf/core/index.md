@@ -11,6 +11,8 @@ okf_version: "0.2"
 * [install:gfx Flow](gfx-install-flow.md) - Host gates, disabled labels, ext → wrapper → gfx. (`draft`)
 * [Framebuffer factory](framebuffer-factory.md) - Fluent PendingFramebuffer; extendManaged / extendDeferred. (`draft`)
 * [Window factory](window-factory.md) - Fluent `Window::driver()` / `profile()` / `make()` → OSWindow. (`draft`)
+* [Panel factory](panel-factory.md) - Fluent `Panel::wrap` / `circuit` / `profile` → PanelIC. (`draft`)
+* [SupportsPartialRefresh](supports-partial-refresh.md) - Contracts/Core marker; CPU PARTIAL present. (`draft`)
 * [Window loop Flow](window-loop-flow.md) - open → paint/present/poll → close. (`draft`)
 * [PixelStore](pixel-store.md) - Packed binary host store; init from FormatSpec + optional Z. (`draft`)
 * [Framebuffer](framebuffer.md) - Engine-agnostic draw API; viewport + FormatSpec. (`draft`)

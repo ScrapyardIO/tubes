@@ -37,7 +37,15 @@ Tubes owns the **2D drawing contract**. Microscrap `*-gfx` packages subclass `Re
 
 `Renderer2D` implements `Contracts\Rendering\DrawingAPI` (pixels, lines, rects, rounds, triangles, fill). Defaults throw `notImplemented` so empty companion stubs stay loadable until each gfx package fills them in.
 
-`SoftRenderer2D` is the package CPU fallback (forwards DrawingAPI to the borrowed framebuffer) used by [MetalCanvas](metal-canvas-sketch.md) when a companion Renderer2D class is not installed.
+Tubes ships **contracts** (`DrawingAPI` / abstract `Renderer2D` with `notImplemented` defaults) — **not** a product CPU renderer. `SoftRenderer2D` is an `@internal` test forwarder only; sketches and PanelIC require a real companion.
+
+| Path | Renderer | Framebuffer |
+|------|----------|-------------|
+| OSWindow | Engine `*Renderer2D` | That engine’s window Deferred |
+| PanelIC CPU | Companion CPU `Renderer2D` (phpdafruit) | Explicit Managed (mono: IC FormatSpec; full-color: B32 draw host); present → IC FormatSpec |
+| PanelIC engine | Engine `Renderer2D` + `ProvisionsHeadlessFramebuffer` | Auto headless Deferred (engine FormatSpec); present → IC FormatSpec |
+
+Engine PanelIC: `renderer($metal)` only — never `useFramebuffer`. CPU: Managed + phpdafruit — never engine Deferred.
 
 Primary line names: `drawHorizontalLine` / `drawVerticalLine` (aliases `drawHLine` / `drawVLine`).
 

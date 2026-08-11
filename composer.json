@@ -19,7 +19,8 @@
         "php": "^8.4|^8.5|^8.6",
         "fabricate/magic-aliases": "^0.7.0",
         "fabricate/nuts-and-bolts": "^0.7.0",
-        "scrapyard-io/framework": "^0.7.0"
+        "scrapyard-io/framework": "^0.7.0",
+        "scrapyard-io/gpio-framework": "^0.7.0"
     },
     "replace": {
         "tubes/contracts": "self.version",
@@ -55,6 +56,7 @@
             "aliases": {
                 "Framebuffer": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Framebuffer",
                 "Window": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Window",
+                "Panel": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Panel",
                 "Font": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Font"
             }
         }

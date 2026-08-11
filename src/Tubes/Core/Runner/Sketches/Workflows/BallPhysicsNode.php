@@ -4,6 +4,7 @@ namespace ScrapyardIO\Tubes\Core\Runner\Sketches\Workflows;
 
 use ScrapyardIO\Tubes\Core\Runner\Sketches\Support\MetalCanvasClickBoost;
 use Fabricate\Sketches\Flow\AsyncNode;
+use ScrapyardIO\Tubes\Canvas\Canvas;
 use ScrapyardIO\Tubes\Canvas\OSWindow;
 use ScrapyardIO\Tubes\HumanInput\EngineInput;
 use ScrapyardIO\Tubes\HumanInput\Enums\MouseButton;
@@ -15,15 +16,16 @@ use ScrapyardIO\Tubes\Windows\WindowHandler;
  *
  * Reads/writes shared['ball'] = [x, y, vx, vy, ax, ay, r]. Units: position px,
  * velocity px/s, acceleration px/s². Integrates with measured delta time
- * (shared['dt'], seconds). Bounds from the open window.
+ * (shared['dt'], seconds). Bounds from the open Canvas (window or panel).
  *
  * On wall hit, multiplies that axis speed by shared['restitution'] (energy loss).
  * Corner hits resolve the deeper axis only so the ball does not lock into a
  * diagonal corner-to-corner orbit. Stamps shared['frame_t0'] for {@see FramePaceNode}.
  * ax/ay are Δv/dt for the sketch HUD.
  *
- * When shared['window'] is an {@see OSWindow} with a companion {@see InputHandler},
- * left-click hits on the ball start a {@see MetalCanvasClickBoost} window (3s).
+ * When shared['window'] / shared['canvas'] is an {@see OSWindow} with a companion
+ * {@see InputHandler}, left-click hits on the ball start a {@see MetalCanvasClickBoost}
+ * window (3s). PanelIC surfaces have no engine mouse — boost stays inactive.
  */
 class BallPhysicsNode extends AsyncNode
 {
@@ -33,12 +35,12 @@ class BallPhysicsNode extends AsyncNode
         $dt = $this->resolveDeltaSeconds($shared);
         $shared['dt'] = $dt;
 
-        $window = $shared['window'] ?? null;
-        $width = $window instanceof OSWindow
-            ? $window->width()
+        $canvas = $shared['canvas'] ?? $shared['window'] ?? null;
+        $width = $canvas instanceof Canvas
+            ? $canvas->width()
             : (is_int($shared['width'] ?? null) ? $shared['width'] : 800);
-        $height = $window instanceof OSWindow
-            ? $window->height()
+        $height = $canvas instanceof Canvas
+            ? $canvas->height()
             : (is_int($shared['height'] ?? null) ? $shared['height'] : 600);
 
         $ball = is_array($shared['ball'] ?? null) ? $shared['ball'] : [];
@@ -241,7 +243,7 @@ class BallPhysicsNode extends AsyncNode
             return $existing;
         }
 
-        $window = $shared['window'] ?? null;
+        $window = $shared['window'] ?? $shared['canvas'] ?? null;
         if (! ($window instanceof OSWindow)) {
             return null;
         }

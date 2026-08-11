@@ -39,8 +39,8 @@ protected array $providers = [
 
 `boot()`:
 
-- Syncs `tubes.defaults.*` into `windows` / `framebuffers` / `fonts` `.default`
-- Registers Workshop `about` **Drivers** rows via `AboutCommand::add()` — `Windows` / `Framebuffers` / `Fonts` from `tubes.defaults.*` (see [tubes config](tubes-config.md))
+- Syncs `tubes.defaults.framebuffer` / `font` into `framebuffers` / `fonts` `.default`
+- Registers Workshop `about` **Drivers** rows via `AboutCommand::add()` — `Canvas` / `Framebuffers` / `Fonts` from `tubes.defaults.*` (see [tubes config](tubes-config.md))
 - Publishes `config/tubes.php` under Workshop tag **`tubes-config`**
 - Registers package sketches on Fabricate `SketchRegistry` (e.g. [CanvasWindowDemo](metal-canvas-sketch.md) as `canvas-window-demo`) — do **not** rely on `config('sketches.load')` merge for package auto-load
 

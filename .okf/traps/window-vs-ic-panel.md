@@ -23,10 +23,13 @@ Treating an **IC Panel** as “just another Window backend” (or a Window that 
 
 # Correct shape
 
-Abstract **output** → concrete **OS Window** *or* concrete **IC Panel** (siblings). See [output model](../orientation/output-model.md).
+Abstract **output** → concrete **OS Window** *or* concrete **IC Panel** (siblings) under `Canvas`. See [output model](../orientation/output-model.md).
+
+**Construction** differs (WindowHandler vs Panel factory lanes). **Consumption** does not — callers type-hint `Canvas` and use `framebuffer` / `present` unless they explicitly need a concrete.
 
 # Related
 
+- [Canvas](../core/canvas.md)
 - [Draw / buffer / output ownership](draw-buffer-output.md)
 
 [^angel-arch]: Angel architecture decisions for tubes 0.7 (session brief)

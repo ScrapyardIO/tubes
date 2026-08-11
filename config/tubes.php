@@ -4,20 +4,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | MagicAlias default drivers
+    | Defaults
     |--------------------------------------------------------------------------
     |
-    | Used when Window::driver() / Framebuffer::driver() / Font::driver()
-    | (or Font::font()) are called without a name. Subsystem configs
-    | (windows.default, framebuffers.default, fonts.default) mirror these
-    | unless the app overrides them after publish.
+    | framebuffer / font — MagicAlias driver slugs when called without a name
+    |   (synced to framebuffers.default / fonts.default).
+    |
+    | canvas — any profile slug under canvas_profiles.windows or .panels.
+    |   Package default points at the window demo profile; apps override
+    |   (e.g. tubes-dev → st7796-front).
     |
     */
 
     'defaults' => [
-        'window' => env('WINDOW_DRIVER', 'sdl3'),
         'framebuffer' => env('FRAMEBUFFER_DRIVER', 'full'),
         'font' => env('FONT_DRIVER', 'classic'),
+        'canvas' => env('TUBES_CANVAS', 'canvas-window-demo'),
     ],
 
     /*
@@ -27,17 +29,10 @@ return [
     |
     | Segmented host (windows) vs IC (panels) canvas presets.
     |
-    | Windows: Window::profile('my-profile') hydrates a PendingWindow from
-    | tubes.canvas_profiles.windows.my-profile. You may also pass a dotted
-    | config path: Window::profile('tubes.canvas_profiles.windows.my-profile').
-    |
-    | Supported window keys:
-    |   driver (required unless using MagicAlias default)
-    |   title, width, height  — or resolution as [w, h] / "WxH"
-    |   options (array) — merged into PendingWindow options
-    |   any other scalar keys are copied into options
-    |
-    | Panels: reserved for PanelIC / GPIO restore (no factory API yet).
+    | Windows: Window::profile('my-profile')
+    | Panels: Panel::profile($name) → Circuit::profile(circuit) + renderer.
+    |   CPU: circuit + renderer + framebuffer (page|full|dirty) — required.
+    |   Engine: circuit + renderer only (omit framebuffer).
     |
     */
 
@@ -70,11 +65,21 @@ return [
         ],
 
         'panels' => [
-            // Example (not wired until PanelIC factory lands):
-            // 'oled-128x64' => [
-            //     'driver' => 'ssd1306',
-            //     'width' => 128,
-            //     'height' => 64,
+            // CPU: circuit + renderer + framebuffer (page|full|dirty) — framebuffer REQUIRED
+            // 'oled-front' => [
+            //     'circuit' => 'oled_front',
+            //     'renderer' => \Microscrap\GFX\PhpdaFruit\PhpdafruitRenderer2D::class,
+            //     'framebuffer' => 'page',
+            // ],
+            // 'st7796-front' => [
+            //     'circuit' => 'st7796',
+            //     'renderer' => \Microscrap\GFX\PhpdaFruit\PhpdafruitRenderer2D::class,
+            //     'framebuffer' => 'dirty',
+            // ],
+            // Engine: circuit + renderer only (omit framebuffer)
+            // 'st7796-vulkan' => [
+            //     'circuit' => 'st7796',
+            //     'renderer' => \Microscrap\GFX\Vulkan\VulkanRenderer2D::class,
             // ],
         ],
 
