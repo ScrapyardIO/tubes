@@ -19,7 +19,7 @@ Before changing tubes code or advising on ScrapyardIO display / framebuffer / wi
 - Discovery: `extra.scrapyard-io.providers` → `ScrapyardIO\Tubes\Core\Providers\TubesServiceProvider` (AggregateServiceProvider → FramebuffersServiceProvider).
 - MagicAlias: `Framebuffer` / `Window` / `Font` → managers (`extra.scrapyard-io.aliases`); `driver()` with no name uses `tubes.defaults.*`.
 - Root config: `config/tubes.php` merged as `tubes`; publish with `workshop vendor:publish --tag=tubes-config`. Canvas presets: `tubes.canvas_profiles.windows|panels`; windows via `Window::profile('slug')`. See `.okf/core/tubes-config.md`.
-- Subtree components: each splittable folder under `src/Tubes/{Component}/` needs `composer.json` + `LICENSE.md` + `.gitattributes`; umbrella `replace` maps `tubes/{component}` at `self.version` (see `.okf/conventions/component-subtree-packaging.md`).
+- Subtree components: each splittable folder under `src/Tubes/{Component}/` **except Core** needs `composer.json` + `LICENSE.md` + `.gitattributes`; umbrella `replace` maps `tubes/{component}` at `self.version` (see `.okf/conventions/component-subtree-packaging.md`). Core stays umbrella-only.
 - **Ownership:** tubes owns the ScrapyardIO **display** surface as an opt-in companion — not slim framework core.
 - **Output model:** abstract output → sibling concretes **OS Window** | **IC Panel** (not Window-as-IC). Pipeline: draw → framebuffer → present.
 - **Input model:** abstract HumanInput → sibling concretes **EngineInput** | **CircuitInput** (not Circuit-as-Engine). Devices are the shared medium. Companion matrix: `.okf/core/input-handler.md`; model: `.okf/orientation/input-model.md`.

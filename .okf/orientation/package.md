@@ -33,7 +33,7 @@ Root [`README.md`](../README.md) is a short Packagist/GitHub landing page (Illum
 | Discovery | `extra.scrapyard-io.providers` + `aliases` (`Framebuffer`)[^composer] |
 | Role | Display companion (Window \| IC Panel output model) |
 
-Composer `replace` maps legacy split packages to this umbrella: `tubes/monochrome`, `tubes/color`, `tubes/matrix`, `tubes/epaper` → `self.version`.[^composer]
+Composer `replace` maps split components (`tubes/canvas`, `tubes/contracts`, `tubes/fonts`, `tubes/framebuffers`, `tubes/human-input`, `tubes/inputs`, `tubes/panels`, `tubes/rendering`, `tubes/windows`) plus legacy 0.6 names (`tubes/monochrome`, `tubes/color`, `tubes/matrix`, `tubes/epaper`) to `self.version`. **No** `tubes/core` — Core stays umbrella-only.[^composer]
 
 Requires `fabricate/nuts-and-bolts` + `fabricate/magic-aliases` (`^0.7.0`).
 

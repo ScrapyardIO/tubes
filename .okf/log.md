@@ -2,6 +2,7 @@
 
 ## 2026-08-11
 
+* **Update (draft)**: Component subtree packaging — added `composer.json` for Canvas / Windows / Panels / HumanInput / Inputs; umbrella `replace` now lists all split `tubes/*` names. Core remains umbrella-only (no `tubes/core`). Amended [component-subtree-packaging](conventions/component-subtree-packaging.md), [package](orientation/package.md).
 * **Update (draft)**: `PanelDevice` extends `IntegratedCircuit`. Wrapper classes renamed `FullColorDisplay`/`MonochromeDisplay` → `FullColorPanel`/`MonochromePanel`; chip contracts keep Display names. PanelManager instantiates the Panel classes. Amended [panel-factory](core/panel-factory.md).
 
 ## 2026-08-10

@@ -3,7 +3,7 @@
     "description": "The ScrapyardIO Display Panel Framework.",
     "keywords": ["framework", "scrapyard-io", "display", "framebuffer"],
     "license": "MIT",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "homepage": "https://scrapyard-io.projectsaturnstudios.com/ecosystem/scrapyard-io/tubes/0.7.x",
     "support": {
         "issues": "https://github.com/scrapyard-io/tubes/issues",
@@ -23,10 +23,15 @@
         "scrapyard-io/gpio-framework": "^0.7.0"
     },
     "replace": {
+        "tubes/canvas": "self.version",
         "tubes/contracts": "self.version",
-        "tubes/framebuffers": "self.version",
-        "tubes/rendering": "self.version",
         "tubes/fonts": "self.version",
+        "tubes/framebuffers": "self.version",
+        "tubes/human-input": "self.version",
+        "tubes/inputs": "self.version",
+        "tubes/panels": "self.version",
+        "tubes/rendering": "self.version",
+        "tubes/windows": "self.version",
         "tubes/monochrome": "self.version",
         "tubes/color": "self.version",
         "tubes/matrix": "self.version",
