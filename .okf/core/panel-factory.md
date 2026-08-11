@@ -67,3 +67,8 @@ Engine host FormatSpec ≠ IC FormatSpec → flush **transcodes** (e.g. SDL RGBA
 - [Deferred framebuffer](deferred-framebuffer.md)
 - [Managed framebuffers](managed-framebuffers.md)
 - [SupportsPartialRefresh](supports-partial-refresh.md)
+
+# Naming (0.7)
+
+- Chip contracts: `PanelDevice` **extends** `IntegratedCircuit`; markers `FullColorDisplay` / `MonochromeDisplay`.
+- Wrapper classes: `FullColorPanel` / `MonochromePanel` (extend `PanelIC`) — not the old `FullColorDisplay` / `MonochromeDisplay` class names.

@@ -123,11 +123,11 @@ class PanelManager implements PanelFactory
         [$framebuffer] = PanelLane::resolve($device, $renderer, $pending);
 
         if ($device instanceof MonochromeDisplayContract) {
-            return new MonochromeDisplay($device, $renderer, $framebuffer);
+            return new MonochromePanel($device, $renderer, $framebuffer);
         }
 
         if ($device instanceof FullColorDisplayContract) {
-            return new FullColorDisplay($device, $renderer, $framebuffer);
+            return new FullColorPanel($device, $renderer, $framebuffer);
         }
 
         throw new PanelException(

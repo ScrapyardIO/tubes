@@ -2,6 +2,7 @@
 
 namespace ScrapyardIO\Tubes\Contracts\Panels;
 
+use GeneralPurposeIO\Contracts\Circuits\IntegratedCircuit;
 use ScrapyardIO\Tubes\Contracts\Framebuffers\DumpedBuffer;
 use ScrapyardIO\Tubes\Contracts\Framebuffers\FormatSpec;
 
@@ -11,7 +12,7 @@ use ScrapyardIO\Tubes\Contracts\Framebuffers\FormatSpec;
  * DOSR display ICs implement a qualification marker ({@see MonochromeDisplay}
  * or {@see FullColorDisplay}) plus this shared transmit API.
  */
-interface PanelDevice
+interface PanelDevice extends IntegratedCircuit
 {
     public function width(): int;
 

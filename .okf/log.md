@@ -1,5 +1,9 @@
 # Directory Update Log
 
+## 2026-08-11
+
+* **Update (draft)**: `PanelDevice` extends `IntegratedCircuit`. Wrapper classes renamed `FullColorDisplay`/`MonochromeDisplay` → `FullColorPanel`/`MonochromePanel`; chip contracts keep Display names. PanelManager instantiates the Panel classes. Amended [panel-factory](core/panel-factory.md).
+
 ## 2026-08-10
 
 * **Fix (draft)**: CPU partial refresh — `SupportsPartialRefresh` in Contracts/Core; ST77xx / GC9A01 / SSD1306 / SH1106 implement it; `PanelIC::supportsPartialRefresh()`; CanvasWindowDemo primes once then erases ball/HUD damage (HUD ~10Hz); HUD FPS prefers `work_ns`. Amended [canvas](core/canvas.md), [panel-factory](core/panel-factory.md).
