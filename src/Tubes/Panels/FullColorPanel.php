@@ -10,7 +10,7 @@ use ScrapyardIO\Tubes\Rendering\Renderer2D;
 /**
  * Tubes canvas wrapping a full-color {@see FullColorDisplayContract} IC.
  */
-class FullColorDisplay extends PanelIC
+class FullColorPanel extends PanelIC
 {
     public function __construct(
         FullColorDisplayContract $device,

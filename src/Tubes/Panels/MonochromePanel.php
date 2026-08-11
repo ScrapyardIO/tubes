@@ -10,7 +10,7 @@ use ScrapyardIO\Tubes\Rendering\Renderer2D;
 /**
  * Tubes canvas wrapping a monochrome {@see MonochromeDisplayContract} IC.
  */
-class MonochromeDisplay extends PanelIC
+class MonochromePanel extends PanelIC
 {
     public function __construct(
         MonochromeDisplayContract $device,
