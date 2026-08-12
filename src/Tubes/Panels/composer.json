@@ -16,7 +16,7 @@
     "require": {
         "php": "^8.4|^8.5|^8.6",
         "fabricate/nuts-and-bolts": "^0.7.0",
-        "scrapyard-io/gpio-framework": "^0.7.0",
+        "gpio/contracts": "^0.7.0",
         "tubes/contracts": "^0.7.0"
     },
     "minimum-stability": "dev",

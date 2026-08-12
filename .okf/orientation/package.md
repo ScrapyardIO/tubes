@@ -35,7 +35,22 @@ Root [`README.md`](../README.md) is a short Packagist/GitHub landing page (Illum
 
 Composer `replace` maps split components (`tubes/canvas`, `tubes/contracts`, `tubes/fonts`, `tubes/framebuffers`, `tubes/human-input`, `tubes/inputs`, `tubes/panels`, `tubes/rendering`, `tubes/windows`) plus legacy 0.6 names (`tubes/monochrome`, `tubes/color`, `tubes/matrix`, `tubes/epaper`) to `self.version`. **No** `tubes/core` — Core stays umbrella-only.[^composer]
 
-Requires `fabricate/nuts-and-bolts` + `fabricate/magic-aliases` (`^0.7.0`).
+## Composer requires (granular)
+
+Never kitchen-sink-require `scrapyard-io/framework` / `scrapyard-io/gpio-framework`. Mirror `scrapyard-io/waveforms`:
+
+| Package | Why |
+|---------|-----|
+| `fabricate/nuts-and-bolts` | `AggregateServiceProvider` / `ServiceProvider` / `Composer` / `Splices4Bits` |
+| `fabricate/magic-aliases` | Tubes MagicAliases |
+| `fabricate/contracts` | `SketchRegistry` / sketch attributes |
+| `fabricate/sketches` | `Sketch` / `Flow` / WindowLoop + GfxInstall nodes |
+| `fabricate/console` | `Command` / `GeneratorCommand` |
+| `fabricate/filesystem` | GfxInstall composer/path nodes |
+| `gpio/contracts` | `IntegratedCircuit` on `PanelDevice` |
+| `waveforms/contracts` | CircuitInput ButtonPad / GameController mapping |
+
+Non-core components must not import Core (own or foreign). See [dependency direction](../conventions/dependency-direction.md).
 
 # Reconstituting surface (on disk)
 

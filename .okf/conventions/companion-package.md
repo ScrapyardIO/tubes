@@ -27,6 +27,7 @@ Therefore:
 2. Discovery uses Composer `extra.scrapyard-io.providers`.[^composer]
 3. Knowledge for this package lives at **package-root** `.okf/` only — never nest `.okf` under `src/Tubes/*`.[^angel-arch]
 4. Display remains **opt-in**; apps without tubes do not get panel/window surfaces from framework alone.[^angel-arch]
+5. Composer `require` lists split packages only (`fabricate/*`, `gpio/contracts`, `waveforms/contracts`) — never kitchen-sink umbrellas (see [dependency direction](dependency-direction.md)).
 
 # Related
 

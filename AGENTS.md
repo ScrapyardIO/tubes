@@ -16,6 +16,9 @@ Before changing tubes code or advising on ScrapyardIO display / framebuffer / wi
 ## Package rules (quick) — 0.7.x (reconstituting)
 
 - Composer: `scrapyard-io/tubes` **0.7.0**. PHP `^8.4|^8.5|^8.6`. Namespace `ScrapyardIO\Tubes\` → `src/Tubes`.
+- **Composer require rule (hard):** never put kitchen-sink umbrellas (`scrapyard-io/framework`, `scrapyard-io/gpio-framework`, …) in `require` or as a `suggest` workaround. List only split packages (`fabricate/*`, `gpio/*`, `waveforms/*`). Pattern: `scrapyard-io/waveforms`.
+- **Core vs component (hard):** Core may use own Core + non-core. Non-core components must **never** import Core (own `ScrapyardIO\Tubes\Core`, or foreign `Fabricate\Core` / `GeneralPurposeIO\Core`). Move the seam — do not paper over with umbrellas.
+- Requires (granular): `fabricate/console|contracts|filesystem|magic-aliases|nuts-and-bolts|sketches` + `gpio/contracts` + `waveforms/contracts`.
 - Discovery: `extra.scrapyard-io.providers` → `ScrapyardIO\Tubes\Core\Providers\TubesServiceProvider` (AggregateServiceProvider → FramebuffersServiceProvider).
 - MagicAlias: `Framebuffer` / `Window` / `Font` → managers (`extra.scrapyard-io.aliases`); `driver()` with no name uses `tubes.defaults.*`.
 - Root config: `config/tubes.php` merged as `tubes`; publish with `workshop vendor:publish --tag=tubes-config`. Canvas presets: `tubes.canvas_profiles.windows|panels`; windows via `Window::profile('slug')`. See `.okf/core/tubes-config.md`.

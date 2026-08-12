@@ -138,12 +138,6 @@ class PanelManager implements PanelFactory
 
     protected function resolveCircuitProfile(string $profile): PanelDevice
     {
-        if (! class_exists(Circuit::class)) {
-            throw new PanelException(
-                'Circuit MagicAlias is unavailable. Require scrapyard-io/gpio-framework to resolve panel circuit profiles.'
-            );
-        }
-
         try {
             $ic = Circuit::profile($profile);
         } catch (Throwable $exception) {
