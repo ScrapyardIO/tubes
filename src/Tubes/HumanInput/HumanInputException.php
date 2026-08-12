@@ -25,4 +25,14 @@ class HumanInputException extends InvalidArgumentException
     {
         return new self("AnalogStick {$axis} must be between -1 and 1 inclusive, got {$value}.");
     }
+
+    public static function circuitInputRequiresProfiles(): self
+    {
+        return new self('CircuitInput::profile() requires at least one circuits.php profile name.');
+    }
+
+    public static function circuitProfileNotButtonPad(string $profile): self
+    {
+        return new self("Circuit profile [{$profile}] did not resolve to a Waveforms ButtonPad or GameController.");
+    }
 }

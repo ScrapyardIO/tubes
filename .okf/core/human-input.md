@@ -26,7 +26,7 @@ sources:
 | Class | Notes |
 |-------|-------|
 | `EngineInput` | Wraps `Inputs\InputHandler`; delegates poll + device accessors |
-| `CircuitInput` | Abstract hollow sibling for GPIO later |
+| `CircuitInput` | Concrete GPIO host — `profile(...$names)` / `fromCircuits(...)` maps Waveforms `GameController` → Tubes `GameController` (LEFT/RIGHT sticks + triggers) and Waveforms `ButtonPad`-only → Tubes `GamePad`; `poll()` re-polls circuits and updates controls in place |
 
 # Devices (not HumanInput subclasses)
 

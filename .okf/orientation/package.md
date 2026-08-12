@@ -22,7 +22,7 @@ sources:
 
 Composer package `scrapyard-io/tubes` at **0.7.0** — described as “The ScrapyardIO Display Panel Framework.”[^composer] It is an **opt-in companion** to `scrapyard-io/framework` 0.7 for display surfaces (see [ownership vs framework](ownership-vs-framework.md)).
 
-Root [`README.md`](../README.md) is a short Packagist/GitHub landing page (Illuminate-style) that points to the [ecosystem docs](https://scrapyard-io.projectsaturnstudios.com/ecosystem/scrapyard-io/tubes/0.7.x/overview) — not a second docs tree.
+Root [`README.md`](../README.md) is a short Packagist/GitHub landing page (Illuminate-style) with CI/Packagist/Docs badges that points to the [ecosystem docs](https://scrapyard-io.projectsaturnstudios.com/ecosystem/scrapyard-io/tubes/0.7.x/overview) — not a second docs tree. GitHub Actions: [`.github/workflows/tests.yml`](../.github/workflows/tests.yml) (PHP 8.4/8.5 · Pest). Full page inventory: [Ecosystem docs](ecosystem-docs.md).
 
 | Field | Value |
 |-------|-------|

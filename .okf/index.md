@@ -18,6 +18,7 @@ Read this index first; open only the concepts needed for the task.
 Section index: [orientation/](orientation/index.md)
 
 * [Package (0.7)](orientation/package.md) - Composer identity, namespace, reconstituting surface.
+* [Ecosystem docs (website)](orientation/ecosystem-docs.md) - 0.7.x page inventory + sync; gpio-style Basics/Components/Diving Deeper. (`draft`)
 * [Ownership vs framework](orientation/ownership-vs-framework.md) - Tubes owns display; framework 0.7 stays slim.
 * [Output model (Window | IC Panel)](orientation/output-model.md) - Sibling concretes under an abstract output; shared framebuffer medium.
 * [Input model (Engine | Circuit)](orientation/input-model.md) - Sibling concretes under abstract HumanInput; devices as shared medium. (`draft`)

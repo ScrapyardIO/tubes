@@ -2,6 +2,8 @@
 
 ## 2026-08-11
 
+* **CircuitInput concrete (draft):** `CircuitInput::profile` / `fromCircuits` maps Waveforms `GameController` → Tubes `GameController` (LEFT/RIGHT sticks + trigger AnalogButtons) and ButtonPad-only → `GamePad`. Leaf `tubes/human-input` requires `waveforms/contracts`. Pest `tests/HumanInput/CircuitInputTest.php`. Updated [human-input](core/human-input.md) + [input-model](orientation/input-model.md).
+* **Update (draft)**: Website ecosystem docs refreshed to gpio-style **0.7.x only** (removed 0.6.x): Basics / Configuration / Commands / Demo sketches + per-component pages (no Core) / Diving Deeper / Reference / Troubleshooting; keep Canvas Window Demo. README badges + GHA Pest CI. New [ecosystem-docs](orientation/ecosystem-docs.md).
 * **Update (draft)**: Component subtree packaging — added `composer.json` for Canvas / Windows / Panels / HumanInput / Inputs; umbrella `replace` now lists all split `tubes/*` names. Core remains umbrella-only (no `tubes/core`). Amended [component-subtree-packaging](conventions/component-subtree-packaging.md), [package](orientation/package.md).
 * **Update (draft)**: `PanelDevice` extends `IntegratedCircuit`. Wrapper classes renamed `FullColorDisplay`/`MonochromeDisplay` → `FullColorPanel`/`MonochromePanel`; chip contracts keep Display names. PanelManager instantiates the Panel classes. Amended [panel-factory](core/panel-factory.md).
 

@@ -43,7 +43,7 @@ Umbrella `scrapyard-io/tubes` **replaces** those split names at `self.version` s
 | `Canvas/` | `tubes/canvas` (requires `tubes/contracts`) |
 | `Windows/` | `tubes/windows` (requires `tubes/contracts`, `fabricate/nuts-and-bolts`) |
 | `Panels/` | `tubes/panels` (requires `tubes/contracts`, `fabricate/nuts-and-bolts`, `scrapyard-io/gpio-framework`) |
-| `HumanInput/` | `tubes/human-input` (requires `tubes/contracts`) |
+| `HumanInput/` | `tubes/human-input` (requires `tubes/contracts`, `waveforms/contracts`) |
 | `Inputs/` | `tubes/inputs` (requires `tubes/contracts`, `tubes/human-input`) |
 
 **Not split:** `Core/` stays umbrella-only (providers, MagicAliases, canvas profile support) — no `tubes/core` package or replace entry.

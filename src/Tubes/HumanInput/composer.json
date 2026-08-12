@@ -15,7 +15,8 @@
     },
     "require": {
         "php": "^8.4|^8.5|^8.6",
-        "tubes/contracts": "^0.7.0"
+        "tubes/contracts": "^0.7.0",
+        "waveforms/contracts": "^0.7.0"
     },
     "minimum-stability": "dev",
     "autoload": {

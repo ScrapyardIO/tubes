@@ -21,7 +21,7 @@ The abstract **human-input host** resolves to one of two sibling concretes:[^ang
 | Concrete | Role |
 |----------|------|
 | **EngineInput** | Desktop / gfx engine path — wraps companion `InputHandler` (like OSWindow wraps WindowHandler) |
-| **CircuitInput** | GPIO / circuit path — hollow for later; not an EngineInput backend |
+| **CircuitInput** | GPIO / circuit path — Waveforms ButtonPad/GameController profiles → Tubes devices; not an EngineInput backend |
 
 These are **siblings** under abstract `HumanInput` — **not** “Circuit as an EngineInput driver.”[^angel-arch]
 
@@ -37,7 +37,7 @@ companion pollNative / GPIO read  →  devices (Keyboard, Mouse, pads)  →  Hum
 
 - **Devices** (Keyboard, Mouse, GamePad, GameController) and **controls** (DigitalButton, AnalogButton, AnalogStick) are **not** HumanInput subclasses — they are the shared medium.[^angel-arch]
 - **EngineInput:** thin wrapper; `poll()` and device getters delegate to `InputHandler`.
-- **CircuitInput:** abstract hollow sibling; wire GPIO later without collapsing into EngineInput.
+- **CircuitInput:** concrete sibling; `CircuitInput::profile(...)` resolves gpio circuits implementing Waveforms contracts into Tubes GamePad/GameController devices without collapsing into EngineInput.
 - Callers should not care whether the host is Engine or Circuit once devices are filled.
 
 # Sequencing (0.7 restore)
@@ -45,7 +45,7 @@ companion pollNative / GPIO read  →  devices (Keyboard, Mouse, pads)  →  Hum
 | Path | Notes |
 |------|-------|
 | Engine / gfx | Lands first with companion InputHandler subclasses |
-| Circuit / GPIO | Depends on circuit restore **later** under CircuitInput[^angel-arch] |
+| Circuit / GPIO | `CircuitInput` + Waveforms human-input ICs (`waveforms/contracts`)[^angel-arch] |
 
 # Related
 

@@ -36,7 +36,7 @@ Protected state: `?Keyboard $keyboard`, `?Mouse $mouse`, `array $game_pads`, `ar
 | Metal binding | microscrap/metal / ext-metal | `mtl_input_*` (0.7.3+) |
 | Metal gfx | microscrap/metal-gfx | `MetalInputHandler`; fan-out in `MetalWindowHandler::pollNative` |
 | open-gl/vulkan/cuda bindings | — | Draw/compute only, not input hosts |
-| Circuit/GPIO | later under CircuitInput | Not an InputHandler backend |
+| Circuit/GPIO | `CircuitInput` (Waveforms ButtonPad/GameController) | Not an InputHandler backend |
 
 # Related
 
