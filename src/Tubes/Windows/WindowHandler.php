@@ -160,6 +160,17 @@ abstract class WindowHandler
         return $this;
     }
 
+    /**
+     * Whether this window currently owns keyboard/game input focus.
+     *
+     * Companions override (SDL INPUT_FOCUS, GLFW_FOCUSED, NSWindow isKeyWindow).
+     * Default true preserves older drivers until they grow a real probe.
+     */
+    public function hasInputFocus(): bool
+    {
+        return $this->opened;
+    }
+
     public function close(): static
     {
         if (! $this->opened) {

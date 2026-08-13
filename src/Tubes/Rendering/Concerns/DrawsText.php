@@ -129,14 +129,9 @@ trait DrawsText
             $yo = $glyphInfo['yOffset'];
             if ($this->font->getYOffsetMode() === 'lvgl_line') {
                 $yo = $this->font->getYAdvance() - $h - $yo;
-            } elseif ($this->font->getFontEncoding() === 'lvgl') {
-                // Montserrat-like converted LVGL fonts can carry raw yOffsets where
-                // shorter lowercase glyphs appear superscripted. Align by cap height.
-                $capHeight = $this->font->getCapHeight();
-                if ($yo >= 0 && $h < $capHeight) {
-                    $yo += ($capHeight - $h);
-                }
             }
+            // LVGL faces with yOffsetMode=raw (e.g. Montserrat) already carry per-glyph
+            // offsets — do not re-bias by cap height or descenders (Q/g/y) jump.
 
             $xo16 = 0;
             $yo16 = 0;
@@ -357,11 +352,6 @@ trait DrawsText
                     $yo = $glyphInfo['yOffset'];
                     if ($this->font->getYOffsetMode() === 'lvgl_line') {
                         $yo = $this->font->getYAdvance() - $gh - $yo;
-                    } elseif ($this->font->getFontEncoding() === 'lvgl') {
-                        $capHeight = $this->font->getCapHeight();
-                        if ($yo >= 0 && $gh < $capHeight) {
-                            $yo += ($capHeight - $gh);
-                        }
                     }
 
                     if ($this->wrap && (($x + (($xo + $gw) * $this->text_size_x)) > $this->width())) {

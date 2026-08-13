@@ -83,6 +83,14 @@ class OSWindow extends Canvas
         return $this;
     }
 
+    /**
+     * Keyboard / pad input should be ignored when this is false.
+     */
+    public function hasInputFocus(): bool
+    {
+        return $this->handler->hasInputFocus();
+    }
+
     public function shouldClose(): bool
     {
         return $this->handler->isOpen() && $this->handler->shouldClose();
