@@ -21,6 +21,8 @@ PHP library (`0.8.0`) that registers a `WindowManager`, publishes `config/window
 * [WindowManager](api/window-manager.md) - Driver factory and `app()`
 * [WindowableApplication](api/windowable-application.md) - Contract and abstract base
 * [WindowSurface](api/window-surface.md) - Contract and abstract base
+* [ViewType](api/view-type.md) - Shared view catalog for `addView`
+* [TextAlignment](api/text-alignment.md) - Shared label text alignment for `addView`
 * [CanOwnMenuBars](api/can-own-menu-bars.md) - Menu ownership and `menuAddItem`
 * [Drivers](api/drivers.md) - OS, mac, and linux driver types
 * [Exceptions](api/exceptions.md) - `OSApplicationException` and `WindowableException`

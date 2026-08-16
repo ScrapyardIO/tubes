@@ -8,7 +8,8 @@ interface WindowableApplication extends CanOwnMenuBars
     public function terminate(): void;
 
     public function createWindow(
-        string $name, int $width,
+        string $name,
+        int $width,
         int $height,
         ?WindowSurface &$window = null
     ): static;
