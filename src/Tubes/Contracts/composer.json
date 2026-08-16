@@ -1,0 +1,33 @@
+{
+    "name": "tubes/contracts",
+    "description": "The Tubes Contracts component.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Angel Gonzalez",
+            "email": "angel@projectsaturnstudios.com"
+        }
+    ],
+    "homepage": "https://scrapyard-io.projectsaturnstudios.com/ecosystem/scrapyard-io/tubes/0.7.x",
+    "support": {
+        "issues": "https://github.com/scrapyard-io/tubes/issues",
+        "source": "https://github.com/scrapyard-io/tubes"
+    },
+    "require": {
+        "php": "^8.4|^8.5|^8.6"
+    },
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Tubes\\Contracts\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.7.x-dev",
+        }
+    }
+}
