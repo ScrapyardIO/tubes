@@ -3,8 +3,8 @@
     "description": "The ScrapyardIO Display Panel Framework.",
     "keywords": ["framework", "scrapyard-io", "display", "framebuffer"],
     "license": "MIT",
-    "version": "0.7.3",
-    "homepage": "https://scrapyard-io.projectsaturnstudios.com/ecosystem/scrapyard-io/tubes/0.7.x",
+    "version": "0.8.0",
+    "homepage": "https://scrapyard-io.projectsaturnstudios.com/ecosystem/scrapyard-io/tubes/0.8.x",
     "support": {
         "issues": "https://github.com/scrapyard-io/tubes/issues",
         "source": "https://github.com/scrapyard-io/tubes"
@@ -16,42 +16,27 @@
         }
     ],
     "require": {
-        "php": "^8.4|^8.5|^8.6",
-        "fabricate/console": "^0.7.0",
-        "fabricate/contracts": "^0.7.0",
-        "fabricate/filesystem": "^0.7.0",
-        "fabricate/magic-aliases": "^0.7.0",
-        "fabricate/nuts-and-bolts": "^0.7.0",
-        "fabricate/sketches": "^0.7.0",
-        "gpio/contracts": "^0.7.0",
-        "waveforms/contracts": "^0.7.0"
+        "php": "^8.4|^8.5|^8.6"
     },
     "replace": {
-        "tubes/canvas": "self.version",
-        "tubes/contracts": "self.version",
-        "tubes/fonts": "self.version",
-        "tubes/framebuffers": "self.version",
-        "tubes/human-input": "self.version",
-        "tubes/inputs": "self.version",
-        "tubes/panels": "self.version",
-        "tubes/rendering": "self.version",
-        "tubes/windows": "self.version",
-        "tubes/monochrome": "self.version",
-        "tubes/color": "self.version",
-        "tubes/matrix": "self.version",
-        "tubes/epaper": "self.version"
+        "tubes/contracts" : "self.version",
+        "tubes/windows": "self.version"
+    },
+    "suggest": {
+        "microscrap/scrapyard-gtk": "To build native apps on Linux.",
+        "microscrap/scrapyard-appkit": "To build native apps on MacOS."
     },
     "require-dev": {
         "pestphp/pest": "^4"
     },
     "autoload": {
         "psr-4": {
-            "ScrapyardIO\\Tubes\\": "src/Tubes"
+            "Tubes\\": "src/Tubes"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "ScrapyardIO\\Tubes\\Tests\\": "tests/"
+            "Tubes\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -60,13 +45,10 @@
         },
         "scrapyard-io": {
             "providers": [
-                "ScrapyardIO\\Tubes\\Core\\Providers\\TubesServiceProvider"
+                "Tubes\\Core\\Providers\\TubesServiceProvider"
             ],
             "aliases": {
-                "Framebuffer": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Framebuffer",
-                "Window": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Window",
-                "Panel": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Panel",
-                "Font": "ScrapyardIO\\Tubes\\Core\\MagicAliases\\Font"
+
             }
         }
     },
