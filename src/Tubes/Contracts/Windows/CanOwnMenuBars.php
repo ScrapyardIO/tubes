@@ -5,6 +5,7 @@ namespace Tubes\Contracts\Windows;
 interface CanOwnMenuBars
 {
     public function ownsMenuBar(): bool;
+    public function menuPollAction(): string;
 
     public function menuAddItem(
         string $menuTitle,

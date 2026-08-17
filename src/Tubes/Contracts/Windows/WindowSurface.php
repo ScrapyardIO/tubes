@@ -52,7 +52,46 @@ interface WindowSurface extends CanOwnMenuBars
         array $addl_params = []
     ): static;
 
+    /**
+     * @param  array<string, mixed>  $addl_params
+     */
+    public function addEntry(
+        string $name,
+        int $x,
+        int $y,
+        int $h,
+        int $w,
+        array $addl_params = []
+    ): static;
+
+    /**
+     * @param  array<string, mixed>  $addl_params
+     */
+    public function addCheckbox(
+        string $name,
+        int $x,
+        int $y,
+        int $h,
+        int $w,
+        array $addl_params = []
+    ): static;
+
     public function pollClick(string $name): bool;
 
     public function setLabelText(string $name, string $text): static;
+
+    public function getEntryText(string $name): string;
+
+    public function setEntryText(string $name, string $text): static;
+
+    public function isCheckboxChecked(string $name): bool;
+
+    public function setCheckboxChecked(string $name, bool $checked): static;
+
+    /**
+     * @param  array<int, string>  $buttons
+     */
+    public function showAlert(string $message, string $detail = '', array $buttons = ['OK']): static;
+
+    public function pollAlert(): ?int;
 }

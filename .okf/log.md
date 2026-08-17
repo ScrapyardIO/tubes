@@ -1,8 +1,16 @@
 # Directory Update Log
 
+## 2026-08-17 (entry / checkbox / alert on contract)
+
+* Contract `addEntry`, `addCheckbox`, `getEntryText`, `setEntryText`, `isCheckboxChecked`, `setCheckboxChecked`, `showAlert($message, $detail = '', $buttons = ['OK'])`, and `pollAlert(): ?int`. Abstract base implements `addEntry` / `addCheckbox` by delegating to `addView(ViewType::ENTRY|CHECKBOX, …)`; backends override. Entry/checkbox get-set and alert show/poll are contract-only; backends implement. One alert per window; second `showAlert` throws `WindowableException`. `pollAlert` returns `null` or a 0-based button index.
+
 ## 2026-08-16 (pollClick / setLabelText on contract)
 
 * `pollClick($name): bool` and `setLabelText($name, $text): static` moved from abstract base declarations onto `Tubes\Contracts\Windows\WindowSurface`. Backends still implement. Abstract base no longer redeclares them.
+
+## 2026-08-17 (FontWeight / font_size)
+
+* `Tubes\Windows\Enums\FontWeight` (int 0–8, matches AppKit `FontWeightKind`). `$addl_params['font_size']` (float) and `$addl_params['font_weight']` on `addLabel`. `WindowSurface::fontSizeFrom` / `fontWeightFrom` read them; backends apply native font styling.
 
 ## 2026-08-16 (Y origin)
 

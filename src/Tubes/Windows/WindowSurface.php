@@ -4,6 +4,7 @@ namespace Tubes\Windows;
 
 use Tubes\Contracts\Windows\Exceptions\WindowableException;
 use Tubes\Contracts\Windows\WindowSurface as SurfaceContract;
+use Tubes\Windows\Enums\FontWeight;
 use Tubes\Windows\Enums\TextAlignment;
 use Tubes\Windows\Enums\ViewType;
 
@@ -66,6 +67,34 @@ abstract class WindowSurface implements SurfaceContract
         return $this->addView($name, ViewType::BUTTON, $x, $y, $h, $w, $addl_params);
     }
 
+    /**
+     * @param  array<string, mixed>  $addl_params
+     */
+    public function addEntry(
+        string $name,
+        int $x,
+        int $y,
+        int $h,
+        int $w,
+        array $addl_params = []
+    ): static {
+        return $this->addView($name, ViewType::ENTRY, $x, $y, $h, $w, $addl_params);
+    }
+
+    /**
+     * @param  array<string, mixed>  $addl_params
+     */
+    public function addCheckbox(
+        string $name,
+        int $x,
+        int $y,
+        int $h,
+        int $w,
+        array $addl_params = []
+    ): static {
+        return $this->addView($name, ViewType::CHECKBOX, $x, $y, $h, $w, $addl_params);
+    }
+
     public function getPointer(): int
     {
         return $this->pointer;
@@ -107,6 +136,43 @@ abstract class WindowSurface implements SurfaceContract
         }
         if (is_string($value)) {
             return TextAlignment::tryFrom($value);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $addl_params
+     */
+    protected function fontSizeFrom(array $addl_params): ?float
+    {
+        if (! isset($addl_params['font_size'])) {
+            return null;
+        }
+
+        $value = $addl_params['font_size'];
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $addl_params
+     */
+    protected function fontWeightFrom(array $addl_params): ?FontWeight
+    {
+        if (! isset($addl_params['font_weight'])) {
+            return null;
+        }
+
+        $value = $addl_params['font_weight'];
+        if ($value instanceof FontWeight) {
+            return $value;
+        }
+        if (is_int($value)) {
+            return FontWeight::tryFrom($value);
         }
 
         return null;

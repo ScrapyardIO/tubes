@@ -12,4 +12,4 @@ sources:
     title: ViewType.php
 ---
 
-Backed `string` enum `Tubes\Windows\Enums\ViewType`. Cases: `LABEL`, `BUTTON`, `ENTRY`, `CHECKBOX`, `SWITCH`. `LABEL` also has `WindowSurface::addLabel` (`addView` with `ViewType::LABEL` calls it). `BUTTON` also has `WindowSurface::addButton` (`addView` with `ViewType::BUTTON` calls it).
+Backed `string` enum `Tubes\Windows\Enums\ViewType`. Cases: `LABEL`, `BUTTON`, `ENTRY`, `CHECKBOX`, `SWITCH`. `LABEL` also has `WindowSurface::addLabel` (`addView` with `ViewType::LABEL` calls it). `BUTTON` also has `WindowSurface::addButton` (`addView` with `ViewType::BUTTON` calls it). `ENTRY` has `WindowSurface::addEntry`. `CHECKBOX` has `WindowSurface::addCheckbox`.
