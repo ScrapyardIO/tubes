@@ -1,5 +1,17 @@
 # Directory Update Log
 
+## 2026-08-17 (closeWindow on WindowableApplication)
+
+* Contract `closeWindow(string $name, ?WindowSurface &$window = null): void`. Concrete on the abstract base: `close()` the surface, drop the name from `$this->windows`, null the out-param. Closed names may be reused by `createWindow`. AppKit's old unset-only override was removed so destroy actually runs. GTK inherits; `GTKWindowSurface::close` is already idempotent after `close-request`.
+
+## 2026-08-17 (setRelayout / AppKit live resize)
+
+* Contract `setRelayout(?callable $fn): static` on WindowSurface; base stores `$relayout`. AppKit live-resize cannot see `pollResize` until mouse-up (`NSEventTrackingRunLoopMode` nested in `sendEvent`); sketches register layout apply via `setRelayout` so `windowDidResize` can run it mid-drag. GTK keeps RunNode `pollResize` after `pump()`.
+
+## 2026-08-17 (pollResize / setViewFrame)
+
+* Contract `pollResize(): bool` and `setViewFrame($name, $x, $y, $h, $w): static`. Abstract base stores `$current_width` / `$current_height` (content area rock), implements `pollResize` via protected `nativeContentWidth()` / `nativeContentHeight()`; ignores `<= 0`; `setViewFrame` is abstract. Sketches poll after `pump()` and reposition existing views on `true`.
+
 ## 2026-08-17 (entry / checkbox / alert on contract)
 
 * Contract `addEntry`, `addCheckbox`, `getEntryText`, `setEntryText`, `isCheckboxChecked`, `setCheckboxChecked`, `showAlert($message, $detail = '', $buttons = ['OK'])`, and `pollAlert(): ?int`. Abstract base implements `addEntry` / `addCheckbox` by delegating to `addView(ViewType::ENTRY|CHECKBOX, …)`; backends override. Entry/checkbox get-set and alert show/poll are contract-only; backends implement. One alert per window; second `showAlert` throws `WindowableException`. `pollAlert` returns `null` or a 0-based button index.

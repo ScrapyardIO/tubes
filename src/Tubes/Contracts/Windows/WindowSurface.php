@@ -10,9 +10,11 @@ interface WindowSurface extends CanOwnMenuBars
     public function present(): void;
     public function isClosed(): bool;
     public function getPointer(): int;
+    public function ownsAboutMenu(): bool;
     public function getCurrentWidth(): int;
     public function getCurrentHeight(): int;
     public function getContentPointer(): ?int;
+    public function toggleAboutMenuHook(): void;
     public function setContentPointer(int $content_pointer): static;
 
     /**
@@ -77,6 +79,15 @@ interface WindowSurface extends CanOwnMenuBars
     ): static;
 
     public function pollClick(string $name): bool;
+
+    public function pollResize(): bool;
+
+    /**
+     * @param  (callable(): void)|null  $fn
+     */
+    public function setRelayout(?callable $fn): static;
+
+    public function setViewFrame(string $name, int $x, int $y, int $h, int $w): static;
 
     public function setLabelText(string $name, string $text): static;
 

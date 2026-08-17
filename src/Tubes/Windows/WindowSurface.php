@@ -15,6 +15,9 @@ abstract class WindowSurface implements SurfaceContract
     protected int $current_width;
     protected int $current_height;
 
+    /** @var (callable(): void)|null */
+    protected mixed $relayout = null;
+
     /** @var array<string, int> */
     protected array $views = [];
 
@@ -120,6 +123,44 @@ abstract class WindowSurface implements SurfaceContract
     {
         return $this->current_height;
     }
+
+    public function pollResize(): bool
+    {
+        $width = $this->nativeContentWidth();
+        $height = $this->nativeContentHeight();
+
+        if ($width <= 0 || $height <= 0) {
+            return false;
+        }
+
+        if ($width === $this->current_width && $height === $this->current_height) {
+            return false;
+        }
+
+        $this->current_width = $width;
+        $this->current_height = $height;
+
+        return true;
+    }
+
+    /**
+     * @param  (callable(): void)|null  $fn
+     */
+    public function setRelayout(?callable $fn): static
+    {
+        $this->relayout = $fn;
+
+        return $this;
+    }
+
+    abstract protected function nativeContentWidth(): int;
+
+    abstract protected function nativeContentHeight(): int;
+
+    /**
+     * @throws WindowableException
+     */
+    abstract public function setViewFrame(string $name, int $x, int $y, int $h, int $w): static;
 
     /**
      * @param  array<string, mixed>  $addl_params
